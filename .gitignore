@@ -6,7 +6,6 @@
 __pycache__/
 *.pyc
 
-# Django
 
 # Node
 node_modules/

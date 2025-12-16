@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon , UserGroupIcon, Square3Stack3DIcon, ShoppingBagIcon, MegaphoneIcon, UserCircleIcon, ArrowRightStartOnRectangleIcon, HeartIcon, BellIcon, Squares2X2Icon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import logo from "../../../public/logo.png";
 import Search from '../../component/search';
+import default_img from "../../../public/media/user_profile/default.png"
 
 const OwnerNav = ({user, setUser}) => {
   const navigate = useNavigate();
@@ -25,22 +26,38 @@ const OwnerNav = ({user, setUser}) => {
     { to: "/complain", label: " الإقتراحات و الشكاوي", icon: ShoppingBagIcon },
     { to: "/advertisement", label: "إدارة الإعلانات", icon: MegaphoneIcon },
   ];
+  
+  //بيانات المستخدم
+  useEffect(() => {
+    if (token) {
+      fetch("http://127.0.0.1:8000/api/users/user/", {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setUser(data);
+        })
+        .catch((error) => console.error("خطأ في جلب بيانات المستخدم:", error));
+    }
+  }, []);
+
   //بيانات الخدمة
   useEffect(() => {
-  if (token) {
-    fetch("http://127.0.0.1:8000/api/services/service/", {
-      headers: { Authorization: `Token ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setService(data[0]);        // ← أهم شيء
-        const count = data.filter(s => s.status === "pending").length;
-        setPendingCount(count);
+    if (token) {
+      fetch("http://127.0.0.1:8000/api/services/service/", {
+        headers: { Authorization: `Token ${token}` }
       })
-      .catch(err => console.error("خطأ في جلب الخدمات:", err));
-  }
-}, []);
-
+        .then(res => res.json())
+        .then(data => {
+          setService(data[0]);
+          const count = data.filter(s => s.status === "pending").length;
+          setPendingCount(count);
+        })
+        .catch(err => console.error("خطأ في جلب الخدمات:", err));
+    }
+  }, []);
 
   //logout
   const handleLogout = () => {

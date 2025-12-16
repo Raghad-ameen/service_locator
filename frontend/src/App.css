@@ -1,0 +1,99 @@
+
+.no-icon::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+.no-scrollbar {
+  overflow-y: auto;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+.group:hover .icon-loop {
+  animation:arrowMove 0.9s ease-in-out infinite;
+}
+@keyframes arrowMove {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+/* هذا يجعل فقط toast-success-only يظهر في وسط الشاشة */
+/* فقط Toast النجاح */
+.toast-success-only {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, 120%) !important;
+  z-index: 999999 !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  background: white !important;
+  box-shadow: none !important;
+}
+
+/* خلفية Blur */
+#toast-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 998;
+}
+
+/* جميع المتصفحات الحديثة */
+input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+
+.react-datepicker__day,
+.react-datepicker__day-name {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* اليوم المختار */
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #0E9F6E !important; /* أخضر */
+  color: white;
+  border-radius: 50%;
+}
+
+.react-datepicker__day--today {
+  color: #0E9F6E !important;
+  background-color: #DEF7EC !important;
+}
+
+.react-datepicker__header {
+  background-color: #DEF7EC !important;
+  border-bottom: none !important;
+}
+
+.react-datepicker__current-month {
+  color: #0E9F6E !important;
+  font-weight: 500;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: #0E9F6E !important;
+}
+
+.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+  border-color: #046C4E !important;
+}
+
+.react-datepicker__day-name {
+  color: #046C4E !important;
+}
+
+
+
+
+

@@ -1,6 +1,8 @@
-# Python
-venv/
+# pipenv
+.venv/
 .env
+
+# Python
 __pycache__/
 *.pyc
 
@@ -10,7 +12,6 @@ media/
 
 # Node
 node_modules/
-dist/
 
 # OS
 .DS_Store

@@ -58,6 +58,29 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserListSerializer
     permission_classes = [IsAdminUser]
 
+# create suggestion
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_suggestion(request):
+    message = request.data.get("message")
+    service_id = request.data.get("service_id")
+
+    if not message:
+        return Response({"message": "نص الاقتراح مطلوب"}, status=400)
+
+    try:
+        service = Service.objects.get(id=service_id)
+    except Service.DoesNotExist:
+        return Response({"service": "الخدمة غير موجودة"}, status=404)
+
+    Suggestion.objects.create(
+        user=request.user,
+        service=service,
+        message=message
+    )
+
+    return Response({"detail": "تم إرسال الاقتراح بنجاح"}, status=201)
+
 # عرض الاقتراحات الخاصة بالمزوّد
 class SuggestionListView(generics.ListAPIView):
     serializer_class = SuggestionSerializer
@@ -65,6 +88,8 @@ class SuggestionListView(generics.ListAPIView):
 
     def get_queryset(self):
         service = Service.objects.filter(owner=self.request.user).first()
+        if not service:
+            return Suggestion.objects.none()
         return Suggestion.objects.filter(service=service).order_by("-created_at")
 
 # المزوّد يرد على اقتراح

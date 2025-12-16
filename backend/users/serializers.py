@@ -83,8 +83,7 @@ class UserListSerializer(serializers.ModelSerializer):
         return Service.objects.filter(owner=obj).exists()
 
 class SuggestionSerializer(serializers.ModelSerializer):
-    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
-
+    user_name = serializers.CharField(source="user.username", read_only=True)
     class Meta:
         model = Suggestion
         fields = ["id", "user_name", "message", "response", "created_at"]

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters, status, generics, permissions, filters
+from rest_framework import viewsets, filters, status, permissions, filters
 from rest_framework.views import APIView
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -6,10 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus
 from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
-from users.models import Notification
+from users.models import Notification, Suggestion
 from django.shortcuts import render
 from django.utils import timezone
-
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -230,3 +229,32 @@ class ProviderAdPackageViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsProvider]
     serializer_class = AdPackageSerializer
     queryset = AdPackage.objects.filter(is_active=True)
+
+class OwnerDashboard(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        service = Service.objects.filter(owner=request.user).first()
+        if not service:
+            return Response({"detail": "لا توجد خدمة مرتبطة بهذا المستخدم"}, status=404)
+
+        visits = service.visits_count
+        likes = service.likes_count
+        products_count = Product.objects.filter(service=service).count()
+
+        latest_products = Product.objects.filter(service=service).order_by('-created_at')[:5]
+        latest_suggestions = Suggestion.objects.filter(service=service).order_by('-created_at')[:5]
+
+        return Response({
+            "visits": visits,
+            "likes": likes,
+            "products": products_count,
+            "latest_products": [
+                {"name": p.name, "description": p.description, "price": p.price}
+                for p in latest_products
+            ],
+            "latest_suggestions": [
+                {"user": s.user.get_full_name(), "message": s.message}
+                for s in latest_suggestions
+            ]
+        })

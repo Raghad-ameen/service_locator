@@ -2,61 +2,83 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from "react-router-dom";
 import { HeartIcon, StarIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import {ChevronRightIcon} from '@heroicons/react/24/solid';
 import { Magicpen, Star } from '../component/icons';
 import default_image from '../assets/haraz.png';
 const ServicePage = () => {
   const { id } = useParams(); // رقم الخدمة
   const [service, setService] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
-
+  const [opensuggestion, setOpensuggestion] = useState(false);
+  const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
   function formatTimeToArabic(time) {
-  if (!time) return "";
+    if (!time) return "";
 
-  let [hour, minute] = time.split(":");
-  hour = Number(hour);
-  const suffix = hour >= 12 ? "م" : "ص";
+    let [hour, minute] = time.split(":");
+    hour = Number(hour);
+    const suffix = hour >= 12 ? "م" : "ص";
 
-  // convert to 12 hours
-  hour = hour % 12 || 12;
+    // convert to 12 hours
+    hour = hour % 12 || 12;
 
-  return `${hour}:${minute} ${suffix}`;
-}
+    return `${hour}:${minute} ${suffix}`;
+  }
 
   useEffect(() => {
     axios
       .get(`http://127.0.0.1:8000/api/services/service/${id}/`)
       .then(res => {
         setService(res.data);
-        setLoading(false);
       })
       .catch(err => {
         console.error("خطأ في تحميل الخدمة:", err);
-        setLoading(false);
       });
   }, [id]);
 
-useEffect(() => {
-  const fetchProducts = async () => {
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          `http://127.0.0.1:8000/api/services/products/?service=${id}`
+        );
+        setProducts(res.data);
+      } catch (err) {
+        console.log("خطأ في تحميل المنتجات:", err);
+      }
+    };
+
+    fetchProducts();
+  }, [id]);
+
+  const handleSubmit = async () => {
+    if (!message.trim()) return;
+
     try {
-      const res = await axios.get(
-        `http://127.0.0.1:8000/api/services/products/?service=${id}`
+      await axios.post(
+        "http://127.0.0.1:8000/api/users/suggestions/create/",
+        {
+          message,
+          service_id: id, // ✅ هذا الصحيح
+        },
+        {
+          headers: {
+            Authorization: `Token ${localStorage.getItem("token")}`,
+          },
+        }
       );
-      setProducts(res.data);
+
+      setMessage("");
+      setOpensuggestion(false);
     } catch (err) {
-      console.log("خطأ في تحميل المنتجات:", err);
+      console.error("خطأ في إرسال الاقتراح:", err.response?.data || err.message);
     }
   };
 
-  fetchProducts();
-}, [id]);
 
-
-  if (loading) return <div>جاري تحميل البيانات...</div>;
   if (!service) return <div>الخدمة غير موجودة</div>;
 
   return (
@@ -78,7 +100,7 @@ useEffect(() => {
           </div>
           <div className='flex gap-8 mt-6'>
             <button className='bg-primary px-4 py-2 rounded-lg text-white flex gap-2 cursor-pointer'><Star/>اضف تقييم</button>
-            <button className='px-4 py-2 border border-primary rounded-lg text-primary flex gap-2 cursor-pointer'><Magicpen/> اكتب ملاحظتك</button>
+            <button onClick={()=> setOpensuggestion(true)} className='px-4 py-2 border border-primary rounded-lg text-primary flex gap-2 cursor-pointer'><Magicpen/> اكتب ملاحظتك</button>
           </div>
       </div>
       <div className='flex-1 flex flex-col overflow-y-auto pt-10 pr-10'>
@@ -183,6 +205,27 @@ useEffect(() => {
                 </div>
               );
             })()}
+          </div>
+        </div>
+      )}
+      {opensuggestion&&(
+        <div onClick={(e) => e.target === e.currentTarget && setOpensuggestion(false)}
+          className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+          <div className='bg-white p-6 rounded-xl w-fit flex flex-col gap-5'>
+            <div className='flex items-center gap-12'>
+              <ChevronRightIcon onClick={()=> setOpensuggestion(false)} className='h-6 w-5 hover:text-primary cursor-pointer'/>
+              <h3 className='text-lg'>اضف ملاحظتك</h3>
+            </div>
+            <p className='font-extralight text-gray-700'>نرحب بكل آرائك وملاحظاتك .. <br/>
+            شاركنا أي اقتراح أو شكوى بخصوص  تجربتك <br/>للخدمة</p>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder='اكتب هنا'
+              rows={4}
+              className='border border-gray-300 rounded-lg p-2 placeholder:text-xs focus:outline-none'
+            />
+            <button onClick={handleSubmit} className='bg-primary text-white py-1 rounded-lg'>إرسال</button>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function TimePickerCustom({ value, onChange, disabled, className  }) {
+export default function TimePickerCustom({ value, onChange, disabled, className }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -15,7 +15,7 @@ export default function TimePickerCustom({ value, onChange, disabled, className 
   const [period, setPeriod] = useState("م");
   const [isInitial, setIsInitial] = useState(true);
 
-  //  دالة التحويل إلى 24 ساعة
+  // دالة التحويل إلى 24 ساعة
   function convertTo24(hour, minute, period) {
     let h = parseInt(hour, 10);
     if (period === "ص") {
@@ -37,36 +37,43 @@ export default function TimePickerCustom({ value, onChange, disabled, className 
   }, []);
 
   useEffect(() => {
-  if (!value) return;
+    if (value === undefined || value === null) return;
 
-  const [h24, m] = value.split(":");
-  let h = parseInt(h24, 10);
-  let p = "ص";
+    if (!value || !value.includes(":")) {
+      setHour("12");
+      setMinute("00");
+      setPeriod("ص");
+      setIsInitial(false);
+      return;
+    }
 
-  if (h === 0) {
-    h = 12;
-    p = "ص";
-  } else if (h === 12) {
-    p = "م";
-  } else if (h > 12) {
-    h = h - 12;
-    p = "م";
-  }
+    const [h24, m] = value.split(":");
+    let h = parseInt(h24, 10);
+    let p = "ص";
 
-  setHour(String(h).padStart(2, "0"));
-  setMinute(m);
-  setPeriod(p);
+    if (isNaN(h)) {
+      h = 12;
+      p = "ص";
+    } else if (h === 0) {
+      h = 12;
+      p = "ص";
+    } else if (h === 12) {
+      p = "م";
+    } else if (h > 12) {
+      h = h - 12;
+      p = "م";
+    }
 
-  // ✅ أول مرة فقط
-  setIsInitial(false);
+    setHour(String(h).padStart(2, "0"));
+    setMinute(m);
+    setPeriod(p);
+    setIsInitial(false);
+  }, [value]);
 
-}, [value]);
-
-  //  return وقت جاهز للباك
   useEffect(() => {
-  if (isInitial) return; // ✅ امنعي أول تشغيل
-  if (onChange) onChange(convertTo24(hour, minute, period));
-}, [hour, minute, period]);
+    if (isInitial) return;
+    if (onChange) onChange(convertTo24(hour, minute, period));
+  }, [hour, minute, period]);
 
   return (
     <div ref={wrapperRef} className="relative w-[160px] font-['Montserrat-Arabic'] font-light text-[14px]">

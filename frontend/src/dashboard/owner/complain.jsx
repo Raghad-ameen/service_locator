@@ -3,6 +3,8 @@ import axios from "axios";
 
 const ComplaintsPage = () => {
   const [complaints, setComplaints] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [reply, setReply] = useState("");
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -21,8 +23,32 @@ const ComplaintsPage = () => {
       }
     };
 
-    fetchComplaints();
+  fetchComplaints();
   }, []);
+
+  const handleReply = async () => {
+    if (!reply.trim()) return;
+
+    await axios.post(
+      `http://127.0.0.1:8000/api/users/suggestions/${selected.id}/reply/`,
+      { response: reply },
+      {
+        headers: {
+          Authorization: `Token ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    // تحديث القائمة بدون إعادة تحميل
+    setComplaints((prev) =>
+      prev.map((c) =>
+        c.id === selected.id ? { ...c, response: reply } : c
+      )
+    );
+
+    setReply("");
+    setSelected(null);
+  };
 
   return (
     <div dir="rtl" className="flex flex-col w-full bg-primary-50/30 h-full font-['Montserrat-Arabic'] py-8 px-10">
@@ -36,8 +62,15 @@ const ComplaintsPage = () => {
             key={item.id}
             className="flex items-start gap-4 px-6 py-4 hover:bg-gray-50 not-last-of-type:border-b-2 border-gray-200"
           >
+          <p className="text-xs mb-5 text-primary">
+                {new Date(item.created_at).toLocaleDateString("ar", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
             <img
-              src="https://i.pravatar.cc/40"
+              src={item.user_image}
               className="w-10 h-10 rounded-full"
             />
 
@@ -47,6 +80,15 @@ const ComplaintsPage = () => {
               <p className="text-xs text-gray-500 line-clamp-2">
                 {item.message}
               </p>
+
+              {!item.response && (
+                <button
+                  onClick={() => setSelected(item)}
+                  className="mt-2 text-xs text-primary hover:underline"
+                >
+                  رد على الاقتراح
+                </button>
+              )}
 
               {item.response && (
                 <p className="text-xs text-primary mt-1">
@@ -62,6 +104,41 @@ const ComplaintsPage = () => {
         </p>
       )}
       </div>
+
+      {selected && (
+        <div
+          onClick={(e) => e.target === e.currentTarget && setSelected(null)}
+          className="fixed inset-0 bg-black/30 flex justify-center items-center z-50"
+        >
+          <div className="bg-white p-5 rounded-xl w-[400px] flex flex-col gap-4">
+            <h3 className="text-sm font-medium">الرد على الاقتراح</h3>
+
+            <textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              rows={4}
+              className="border rounded-lg p-2 text-sm"
+              placeholder="اكتب ردك هنا"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setSelected(null)}
+                className="text-sm text-gray-500"
+              >
+                إلغاء
+              </button>
+
+              <button
+                onClick={handleReply}
+                className="bg-primary text-white px-4 py-1 rounded-lg text-sm"
+              >
+                إرسال
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

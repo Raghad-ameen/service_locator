@@ -84,6 +84,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
 class SuggestionSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source="user.username", read_only=True)
+    user_image = serializers.ImageField(source="user.profile_image", read_only=True)
     class Meta:
         model = Suggestion
-        fields = ["id", "user_name", "message", "response", "created_at"]
+        fields = ["id", "user_name","user_image", "message", "response", "created_at"]

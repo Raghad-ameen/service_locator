@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from "react-router-dom";
-import { HeartIcon, StarIcon, XMarkIcon } from '@heroicons/react/24/solid';
-import {ChevronRightIcon} from '@heroicons/react/24/solid';
+import { HeartIcon, StarIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { StarIcon as StarOutline, CameraIcon } from '@heroicons/react/24/outline';
 import { Magicpen, Star } from '../component/icons';
 import default_image from '../assets/haraz.png';
 const ServicePage = () => {
@@ -12,6 +12,7 @@ const ServicePage = () => {
   const [showModal, setShowModal] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
   const [opensuggestion, setOpensuggestion] = useState(false);
+  const [addreview, setAddreview] = useState(false);
   const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
@@ -85,88 +86,88 @@ const ServicePage = () => {
     <div dir="rtl" className="px-10 font-['Montserrat-Arabic'] font-light text-[15px] flex flex-row min-h-screen">
       {/* بيانات الخدمة */}
       <div className="flex flex-col items-center gap-5 sticky w-[660px] top-20 h-fit self-start pt-10">
-          <div className="relative flex justify-center">
-              <img src={service.cover_image} className="h-70 w-150 rounded-3xl object-cover" alt=""/>
-              <img src={service.logo_image} className='absolute -bottom-10 rounded-full shadow-[0_4px_6px_1px_rgba(0,0,0,0.2)] h-30 w-30'/>
+        <div className="relative flex justify-center">
+          <img src={service.cover_image} className="h-70 w-150 rounded-3xl object-cover" alt="" />
+          <img src={service.logo_image} className='absolute -bottom-10 rounded-full shadow-[0_4px_6px_1px_rgba(0,0,0,0.2)] h-30 w-30' />
+        </div>
+        <h1 className="text-2xl font-bold mt-12">{service.title}</h1>
+        <p className="text-gray-600 text-wrap w-80 text-center">{service.description}</p>
+        <div className='flex gap-6'>
+          <HeartIcon className='h-6 w-6 text-red-500' />
+          <div className='flex gap-2'>
+            <StarIcon className='h-6 w-6 text-yellow-300' />
+            <span className='text-base font-normal'>4.5</span>
           </div>
-          <h1 className="text-2xl font-bold mt-12">{service.title}</h1>
-          <p className="text-gray-600 text-wrap w-80 text-center">{service.description}</p>
-          <div className='flex gap-6'>
-            <HeartIcon className='h-6 w-6 text-red-500'/>
-            <div className='flex gap-2'>
-              <StarIcon className='h-6 w-6 text-yellow-300'/>
-              <span className='text-base font-normal'>4.5</span>
-            </div>
-          </div>
-          <div className='flex gap-8 mt-6'>
-            <button className='bg-primary px-4 py-2 rounded-lg text-white flex gap-2 cursor-pointer'><Star/>اضف تقييم</button>
-            <button onClick={()=> setOpensuggestion(true)} className='px-4 py-2 border border-primary rounded-lg text-primary flex gap-2 cursor-pointer'><Magicpen/> اكتب ملاحظتك</button>
-          </div>
+        </div>
+        <div className='flex gap-8 mt-6'>
+          <button onClick={()=> setAddreview(true)} className='bg-primary px-4 py-2 rounded-lg text-white flex gap-2 cursor-pointer'><Star />اضف تقييم</button>
+          <button onClick={() => setOpensuggestion(true)} className='px-4 py-2 border border-primary rounded-lg text-primary flex gap-2 cursor-pointer'><Magicpen /> اكتب ملاحظتك</button>
+        </div>
       </div>
       <div className='flex-1 flex flex-col overflow-y-auto pt-10 pr-10'>
-            {/* المنتجات */}
-          <div>
-            <h2 className="text-lg mb-3 font-medium">المنتجات</h2>
-            {products && products.length > 0 ? (
-              <div className='pl-20'>
-                {products.slice(0, 5).map((prod) => (
-                  <div key={prod.id} className="flex gap-4 py-3">
-                    <img
-                      src={prod.images?.[0]?.photo || default_image}
-                      onClick={() => {setPreviewImages(prod.images);setShowModal("preview");}}
-                      className="w-30 h-25 rounded-2xl object-cover"
-                      alt=""
-                    />
-                    <div className="flex flex-col gap-2">
-                      <h3 className="font-semibold">{prod.name}</h3>
-                      <p className="text-gray-500">({prod.description})</p>
-                      <p className="text-primary-700 text-sm">{prod.price} ريال</p>
-                    </div>
+        {/* المنتجات */}
+        <div>
+          <h2 className="text-lg mb-3 font-medium">المنتجات</h2>
+          {products && products.length > 0 ? (
+            <div className='pl-20'>
+              {products.slice(0, 5).map((prod) => (
+                <div key={prod.id} className="flex gap-4 py-3">
+                  <img
+                    src={prod.images?.[0]?.photo || default_image}
+                    onClick={() => { setPreviewImages(prod.images); setShowModal("preview"); }}
+                    className="w-30 h-25 rounded-2xl object-cover"
+                    alt=""
+                  />
+                  <div className="flex flex-col gap-2">
+                    <h3 className="font-semibold">{prod.name}</h3>
+                    <p className="text-gray-500">({prod.description})</p>
+                    <p className="text-primary-700 text-sm">{prod.price} ريال</p>
                   </div>
-                ))}
-                {products.length > 5 && (
-                  <button onClick={() => navigate(`/productList?service=${id}`)} className="mt-10 px-4 py-2 bg-gray-100 rounded-lg w-full text-base cursor-pointer">
-                    عرض الكل
-                  </button>
-                )}
-              </div>
-            ) : (
-              <p>لا توجد منتجات</p>
-            )}
-          </div>
+                </div>
+              ))}
+              {products.length > 5 && (
+                <button onClick={() => navigate(`/productList?service=${id}`)} className="mt-10 px-4 py-2 bg-gray-100 rounded-lg w-full text-base cursor-pointer">
+                  عرض الكل
+                </button>
+              )}
+            </div>
+          ) : (
+            <p>لا توجد منتجات</p>
+          )}
+        </div>
 
-          {/* معلومات التواصل */}
-          <div className="mt-10 w-fit">
+        {/* معلومات التواصل */}
+        <div className="mt-10 w-fit">
           <h2 className="text-lg font-medium mb-3">معلومات التواصل</h2>
           <p className='pb-3 mb-2'>الهاتف: {service.phone}</p>
           <p className='border-t border-gray-300 py-2 mb-2'>الواتس: {service.whatsapp}</p>
           <p className='border-t border-gray-300 py-2 mb-2'>الإيميل: {service.email}</p>
-          </div>
-          {/* الموقع */}
-          <div className="mt-10">
+        </div>
+        {/* الموقع */}
+        <div className="mt-10">
           <h2 className="text-lg font-medium mb-3">الموقع</h2>
           <p>{service.location}</p>
-          </div>
-          {/* أوقات الدوام */}
-          <div className="mt-10">
-            <h2 className="text-lg font-medium mb-3">أوقات الدوام:</h2>
+        </div>
+        {/* أوقات الدوام */}
+        <div className="mt-10">
+          <h2 className="text-lg font-medium mb-3">أوقات الدوام:</h2>
 
-            <div className="space-y-2 text-gray-500 font-medium">
-              {service.work_schedules?.map((s) => (
-                <p key={s.id}> <span className='text-black'>{s.day} :</span> {formatTimeToArabic(s.start_time)} - {formatTimeToArabic(s.end_time)} </p>
-              ))}
-            </div>
-          </div>
-          {/* التعليقات */}
-          <div className="mt-10">
-            <h2 className="text-lg font-medium mb-3">التعليقات</h2>
-            {service.reviews?.map((review) => (
-                <div key={review.id} className="border-b py-4">
-                <p className="font-semibold">{review.user}</p>
-                <p className="text-sm text-gray-600">{review.comment}</p>
-                </div>
+          <div className="space-y-2 text-gray-500 font-medium">
+            {service.work_schedules?.map((s) => (
+              <p key={s.id}> <span className='text-black'>{s.day} :</span> {formatTimeToArabic(s.start_time)} - {formatTimeToArabic(s.end_time)} </p>
             ))}
           </div>
+        </div>
+        {/* التعليقات */}
+        <div className="mt-10">
+          <h2 className="text-lg font-medium mb-3">التعليقات</h2>
+          {service.reviews?.map((review) => (
+            <div key={review.id} className="border-b py-4">
+              <p className="font-semibold">{review.user}</p>
+              <p className="text-sm text-gray-600">{review.comment}</p>
+            </div>
+          ))}
+        </div>
       </div>
       {showModal === "preview" && (
         <div
@@ -208,16 +209,16 @@ const ServicePage = () => {
           </div>
         </div>
       )}
-      {opensuggestion&&(
+      {opensuggestion && (
         <div onClick={(e) => e.target === e.currentTarget && setOpensuggestion(false)}
           className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
           <div className='bg-white p-6 rounded-xl w-fit flex flex-col gap-5'>
             <div className='flex items-center gap-12'>
-              <ChevronRightIcon onClick={()=> setOpensuggestion(false)} className='h-6 w-5 hover:text-primary cursor-pointer'/>
+              <ChevronRightIcon onClick={() => setOpensuggestion(false)} className='h-6 w-5 hover:text-primary cursor-pointer' />
               <h3 className='text-lg'>اضف ملاحظتك</h3>
             </div>
-            <p className='font-extralight text-gray-700'>نرحب بكل آرائك وملاحظاتك .. <br/>
-            شاركنا أي اقتراح أو شكوى بخصوص  تجربتك <br/>للخدمة</p>
+            <p className='font-extralight text-gray-700'>نرحب بكل آرائك وملاحظاتك .. <br />
+              شاركنا أي اقتراح أو شكوى بخصوص  تجربتك <br />للخدمة</p>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -225,6 +226,27 @@ const ServicePage = () => {
               rows={4}
               className='border border-gray-300 rounded-lg p-2 placeholder:text-xs focus:outline-none'
             />
+            <button onClick={handleSubmit} className='bg-primary text-white py-1 rounded-lg'>إرسال</button>
+          </div>
+        </div>
+      )}
+      {addreview && (
+        <div onClick={(e) => e.target === e.currentTarget && setAddreview(false)} className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+          <div className='bg-white p-6 rounded-xl w-fit flex flex-col gap-5'>
+            <div className='flex items-center gap-12'>
+              <ChevronRightIcon onClick={() => setAddreview(false)} className='h-6 w-5 hover:text-primary cursor-pointer' />
+              <h3 className='text-lg'>اضف تقييم</h3>
+            </div>
+            <p className='font-extralight text-gray-700'>تقيمك للخدمة يساعدنا في تقديم الافضل</p>
+            <StarOutline className='h-6 w-6 text-yellow-400' />
+            <hr className='text-gray-300' />
+            <h4 className='font-normal text-sm text-gray-900'>اكتب تعليقاً</h4>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder='اكتب هنا' rows={4} className='border border-gray-300 rounded-lg p-2 placeholder:text-xs focus:outline-none' />
+            <div onClick={() => document.getElementById('comImage').click()} className="flex items-center">
+              <CameraIcon className='w-6 h-6 ml-2 text-primary-700' />
+              <label className="cursor-pointer text-primary-700">اضف صورة</label>
+            </div>
+            <input id="comImage" type="file" name="profile_image" accept="image/*" className="hidden w-full border border-gray-400 bg-gray-50 px-5 py-3.5 rounded-xl" />
             <button onClick={handleSubmit} className='bg-primary text-white py-1 rounded-lg'>إرسال</button>
           </div>
         </div>

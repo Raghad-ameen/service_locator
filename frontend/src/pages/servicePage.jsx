@@ -13,7 +13,14 @@ const ServicePage = () => {
   const [previewImages, setPreviewImages] = useState([]);
   const [opensuggestion, setOpensuggestion] = useState(false);
   const [addreview, setAddreview] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [userRating, setUserRating] = useState(null);
+  const [ratingSummary, setRatingSummary] = useState({average: 0, count: 0});
   const [message, setMessage] = useState("");
+  const [comment, setComment] = useState("");
+  const [rating, setRating] = useState(0);
+  const [images, setImages] = useState([]);
+
 
   const navigate = useNavigate();
   function formatTimeToArabic(time) {
@@ -44,7 +51,7 @@ const ServicePage = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/services/products/?service=${id}`
+          `http://127.0.0.1:8000/api/services/public/products/?service=${id}`
         );
         setProducts(res.data);
       } catch (err) {
@@ -54,6 +61,40 @@ const ServicePage = () => {
 
     fetchProducts();
   }, [id]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    axios.get(
+      `http://127.0.0.1:8000/api/users/my-rating/?service=${id}`,
+      {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+      }
+    )
+    .then(res => {
+      setUserRating(res.data.rating); // صح 100%
+    })
+    .catch(() => setUserRating(null));
+  }, [id]);
+
+  useEffect(() => {
+    axios
+      .get(`http://127.0.0.1:8000/api/users/service-rating/?service=${id}`)
+      .then(res => setRatingSummary(res.data))
+      .catch(() => setRatingSummary({ average: 0, count: 0 }));
+  }, [id]);
+
+
+  useEffect(() => {
+    axios
+      .get(`http://127.0.0.1:8000/api/users/comments/?service=${id}`)
+      .then(res => setComments(res.data))
+      .catch(err => console.error(err));
+  }, [id]);
+
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
@@ -79,6 +120,66 @@ const ServicePage = () => {
     }
   };
 
+  const handleSubmitAll = async () => {
+    if (!userRating && !rating && !comment.trim()) {
+      alert("أضيفي تقييم أو تعليق على الأقل");
+      return;
+    }
+
+    try {
+      // ⭐ 1. إرسال التقييم إذا ما قيّم سابقًا
+      if (!userRating && rating) {
+        await axios.post(
+          "http://127.0.0.1:8000/api/users/reviews/",
+          { service: id, rating },
+          {
+            headers: {
+              Authorization: `Token ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setUserRating(rating);
+      }
+
+      // 💬 2. إرسال التعليق + الصور
+      if (comment.trim()) {
+        const formData = new FormData();
+        formData.append("service", id);
+        formData.append("text", comment);
+
+        images.forEach(img => {
+          formData.append("images", img);
+        });
+
+        await axios.post(
+          "http://127.0.0.1:8000/api/users/comments/",
+          formData,
+          {
+            headers: {
+              Authorization: `Token ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        const res = await axios.get(
+          `http://127.0.0.1:8000/api/users/comments/?service=${id}`
+        );
+        setComments(res.data);
+      }
+
+      // 🧹 3. تنظيف وإغلاق
+      setRating(0);
+      setComment("");
+      setImages([]);
+      setAddreview(false);
+
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert("حدث خطأ أثناء الإرسال");
+    }
+  };
+
+
 
   if (!service) return <div>الخدمة غير موجودة</div>;
 
@@ -96,11 +197,13 @@ const ServicePage = () => {
           <HeartIcon className='h-6 w-6 text-red-500' />
           <div className='flex gap-2'>
             <StarIcon className='h-6 w-6 text-yellow-300' />
-            <span className='text-base font-normal'>4.5</span>
+            <span className="text-base font-normal">
+              {ratingSummary.average}
+            </span>
           </div>
         </div>
         <div className='flex gap-8 mt-6'>
-          <button onClick={()=> setAddreview(true)} className='bg-primary px-4 py-2 rounded-lg text-white flex gap-2 cursor-pointer'><Star />اضف تقييم</button>
+          <button onClick={() => setAddreview(true)} className='bg-primary px-4 py-2 rounded-lg text-white flex gap-2 cursor-pointer'><Star />اضف تقييم</button>
           <button onClick={() => setOpensuggestion(true)} className='px-4 py-2 border border-primary rounded-lg text-primary flex gap-2 cursor-pointer'><Magicpen /> اكتب ملاحظتك</button>
         </div>
       </div>
@@ -161,12 +264,37 @@ const ServicePage = () => {
         {/* التعليقات */}
         <div className="mt-10">
           <h2 className="text-lg font-medium mb-3">التعليقات</h2>
-          {service.reviews?.map((review) => (
-            <div key={review.id} className="border-b py-4">
-              <p className="font-semibold">{review.user}</p>
-              <p className="text-sm text-gray-600">{review.comment}</p>
+
+          {comments.length === 0 && (
+            <p className="text-sm text-gray-500">لا توجد تقييمات بعد</p>
+          )}
+
+          {comments.map((c) => (
+            <div key={c.id} className="border-b py-4 flex gap-3">
+              <img
+                src={c.user_image || "/default-avatar.png"}
+                className="w-10 h-10 rounded-full"
+              />
+
+              <div className="flex-1">
+                <p className="font-semibold">{c.user_name}</p>
+                <p className="text-sm text-gray-600">{c.text}</p>
+
+                {c.images?.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {c.images.map(img => (
+                      <img
+                        key={img.id}
+                        src={img.image}
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
+
         </div>
       </div>
       {showModal === "preview" && (
@@ -231,23 +359,74 @@ const ServicePage = () => {
         </div>
       )}
       {addreview && (
-        <div onClick={(e) => e.target === e.currentTarget && setAddreview(false)} className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
-          <div className='bg-white p-6 rounded-xl w-fit flex flex-col gap-5'>
-            <div className='flex items-center gap-12'>
-              <ChevronRightIcon onClick={() => setAddreview(false)} className='h-6 w-5 hover:text-primary cursor-pointer' />
-              <h3 className='text-lg'>اضف تقييم</h3>
+        <div
+          onClick={(e) => e.target === e.currentTarget && setAddreview(false)}
+          className="fixed inset-0 bg-black/30 flex justify-center items-center z-50"
+        >
+          <div className="bg-white p-6 rounded-xl w-fit flex flex-col gap-5">
+            <div className="flex items-center gap-12">
+              <ChevronRightIcon
+                onClick={() => setAddreview(false)}
+                className="h-6 w-5 hover:text-primary cursor-pointer"
+              />
+              <h3 className="text-lg">اضف تقييم</h3>
             </div>
-            <p className='font-extralight text-gray-700'>تقيمك للخدمة يساعدنا في تقديم الافضل</p>
-            <StarOutline className='h-6 w-6 text-yellow-400' />
-            <hr className='text-gray-300' />
-            <h4 className='font-normal text-sm text-gray-900'>اكتب تعليقاً</h4>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder='اكتب هنا' rows={4} className='border border-gray-300 rounded-lg p-2 placeholder:text-xs focus:outline-none' />
-            <div onClick={() => document.getElementById('comImage').click()} className="flex items-center">
-              <CameraIcon className='w-6 h-6 ml-2 text-primary-700' />
-              <label className="cursor-pointer text-primary-700">اضف صورة</label>
+
+            {!userRating && (
+              <div>
+                <p className="font-extralight text-gray-700">
+                  تقيمك للخدمة يساعدنا في تقديم الافضل
+                </p>
+                {/* ⭐ Rating */}
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <StarIcon
+                      key={star}
+                      onClick={() => !userRating && setRating(star)}
+                      className={`h-6 w-6 cursor-pointer ${(userRating || rating) >= star
+                          ? "text-yellow-400"
+                          : "text-gray-300"
+                        }`}
+                    />
+                  ))}
+                </div>
+                <hr className="text-gray-300" />
+              </div>
+            )}
+
+            <h4 className="font-normal text-sm text-gray-900">اكتب تعليقاً</h4>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="اكتب هنا"
+              rows={4}
+              className="border border-gray-300 rounded-lg p-2 placeholder:text-xs focus:outline-none"
+            />
+
+            <div
+              onClick={() => document.getElementById("comImage").click()}
+              className="flex items-center cursor-pointer"
+            >
+              <CameraIcon className="w-6 h-6 ml-2 text-primary-700" />
+              <span className="text-primary-700">اضف صورة</span>
             </div>
-            <input id="comImage" type="file" name="profile_image" accept="image/*" className="hidden w-full border border-gray-400 bg-gray-50 px-5 py-3.5 rounded-xl" />
-            <button onClick={handleSubmit} className='bg-primary text-white py-1 rounded-lg'>إرسال</button>
+
+            <input
+              id="comImage"
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => setImages(Array.from(e.target.files))}
+            />
+
+            <button
+              onClick={handleSubmitAll}
+              className="bg-primary text-white py-1 rounded-lg"
+            >
+              إرسال
+            </button>
+
           </div>
         </div>
       )}

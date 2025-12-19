@@ -1,7 +1,13 @@
 from django.urls import path
-from .views import RegisterView, LoginView, UserListView, SuggestionListView, SuggestionReplyView, current_user, delete_user, search_users, delete_own_account, update_user, create_suggestion
+from .views import RegisterView, LoginView, UserListView, SuggestionListView, SuggestionReplyView, ReviewViewSet, CommentViewSet, current_user, delete_user, search_users, delete_own_account, update_user, create_suggestion, my_rating, service_rating_summary
+from rest_framework.routers import DefaultRouter
 # from .views import promote_admin
 # from .views import demote_admin
+
+router = DefaultRouter()
+
+router.register("reviews", ReviewViewSet, basename="reviews")
+router.register("comments", CommentViewSet, basename="comments")
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -17,5 +23,8 @@ urlpatterns = [
     path('suggestions/', SuggestionListView.as_view(), name='suggestions'),
     path("suggestions/<int:pk>/reply/", SuggestionReplyView.as_view(), name="suggestion-reply"),
     path("suggestions/create/", create_suggestion),
-
+    path("my-rating/", my_rating),
+    path("service-rating/", service_rating_summary),
 ]
+
+urlpatterns += router.urls

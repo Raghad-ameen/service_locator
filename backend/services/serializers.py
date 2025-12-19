@@ -50,16 +50,13 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ['id', 'photo']
 
-
 # ============ Product Display ============
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
-
     class Meta:
         model = Product
         fields = ['id', 'service', 'name', 'description', 'price', 'images']
         read_only_fields = ['service']  # مهم — service لا يتغير على التعديل
-
 
 # ============ Product Create / Update ============
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
@@ -74,14 +71,20 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ['service', 'name', 'description', 'price', 'photos']
 
     def create(self, validated_data):
+        request = self.context["request"]
+        service = validated_data["service"]
+
+        if service.owner != request.user:
+            raise serializers.ValidationError("لا تملك هذه الخدمة")
+
         photos = validated_data.pop("photos", [])
         product = Product.objects.create(**validated_data)
 
-        # إضافة الصور
         for photo in photos:
             ProductImage.objects.create(product=product, photo=photo)
 
         return product
+
 
     def update(self, instance, validated_data):
         photos = validated_data.pop("photos", None)

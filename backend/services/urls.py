@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
-from .views import (ServiceViewSet, CategoryViewSet, WorkScheduleViewSet, ProductViewSet,DeleteProductImageAPIView, ProviderAdViewSet, ProviderAdPackageViewSet, AdminAdViewSet, AdminAdPackageViewSet, PublicAdViewSet, OwnerDashboard)
+from .views import (ServiceViewSet, CategoryViewSet, WorkScheduleViewSet, ProductViewSet,DeleteProductImageAPIView, ProviderAdViewSet, ProviderAdPackageViewSet, AdminAdViewSet, AdminAdPackageViewSet, PublicAdViewSet, OwnerDashboard, PublicProductViewSet)
 router = DefaultRouter()
 router.register(r'service', ServiceViewSet, basename='service')
 router.register(r'categories', CategoryViewSet)
@@ -14,6 +14,8 @@ router.register("provider/packages", ProviderAdPackageViewSet, basename="provide
 router.register("admin/ads", AdminAdViewSet, basename="admin-ads")
 router.register(r'ads', PublicAdViewSet, basename='public-ads')
 router.register("admin/packages", AdminAdPackageViewSet, basename="admin-packages")
+router.register(r'public/products', PublicProductViewSet, basename='public-products')
+
 
 urlpatterns = [
     path("delete-image/<int:image_id>/", DeleteProductImageAPIView.as_view()),

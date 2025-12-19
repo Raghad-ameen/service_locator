@@ -1,6 +1,6 @@
 from rest_framework import viewsets, filters, status, permissions, filters
 from rest_framework.views import APIView
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus
@@ -9,6 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from users.models import Notification, Suggestion
 from django.shortcuts import render
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -125,18 +126,46 @@ class WorkScheduleViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        service_id = self.request.query_params.get('service')
+        user = self.request.user
+        service_id = self.request.query_params.get("service")
+
+        qs = Product.objects.filter(service__owner=user)
+
         if service_id:
-            return Product.objects.filter(service_id=service_id)
-        return Product.objects.all()
+            qs = qs.filter(service_id=service_id)
+
+        return qs
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return ProductCreateUpdateSerializer
         return ProductSerializer
 
+    def perform_update(self, serializer):
+        if serializer.instance.service.owner != self.request.user:
+            raise PermissionDenied("غير مصرح لك")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.service.owner != self.request.user:
+            raise PermissionDenied("غير مصرح لك")
+        instance.delete()
+
+class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        service_id = self.request.query_params.get("service")
+        if not service_id:
+            return Product.objects.none()
+
+        return Product.objects.filter(
+            service_id=service_id,
+            service__status="approved"  # لو عندك حالة
+        )
 
 # ------------------- Delete Product Image -------------------
 class DeleteProductImageAPIView(APIView):
@@ -144,12 +173,25 @@ class DeleteProductImageAPIView(APIView):
 
     def delete(self, request, image_id):
         try:
-            image = ProductImage.objects.get(id=image_id)
+            image = ProductImage.objects.select_related(
+                "product__service"
+            ).get(id=image_id)
+
+            if image.product.service.owner != request.user:
+                return Response(
+                    {"detail": "غير مصرح لك"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
             image.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
         except ProductImage.DoesNotExist:
-            return Response({"detail": "الصورة غير موجودة"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"detail": "الصورة غير موجودة"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
 class IsProvider(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated  # بس لتبسيط؛ ممكن تربطينها بـ role='provider'

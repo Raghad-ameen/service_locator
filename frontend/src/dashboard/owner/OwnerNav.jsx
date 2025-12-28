@@ -5,13 +5,15 @@ import { HomeIcon , UserGroupIcon, Square3Stack3DIcon, ShoppingBagIcon, Megaphon
 import logo from "../../../public/logo.png";
 import Search from '../../component/search';
 import default_img from "../../../public/media/user_profile/default.png"
+import NotificationsDropdown from '../../component/NotificationsDropdown';
+import { useAuth } from "../../context/AuthContext";
 
-const OwnerNav = ({user, setUser}) => {
+const OwnerNav = () => {
+  const { user, logout, token } = useAuth();
   const navigate = useNavigate();
   const [service, setService] = useState(null);
   const location = useLocation();
   const currentPath = location.pathname;
-  const token = localStorage.getItem("token");
   const [pendingCount, setPendingCount] = useState(0);
   const showSearchOff = ["/product"];
 
@@ -26,22 +28,6 @@ const OwnerNav = ({user, setUser}) => {
     { to: "/complain", label: " الإقتراحات و الشكاوي", icon: ShoppingBagIcon },
     { to: "/advertisement", label: "إدارة الإعلانات", icon: MegaphoneIcon },
   ];
-  
-  //بيانات المستخدم
-  useEffect(() => {
-    if (token) {
-      fetch("http://127.0.0.1:8000/api/users/user/", {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setUser(data);
-        })
-        .catch((error) => console.error("خطأ في جلب بيانات المستخدم:", error));
-    }
-  }, []);
 
   //بيانات الخدمة
   useEffect(() => {
@@ -61,13 +47,10 @@ const OwnerNav = ({user, setUser}) => {
 
   //logout
   const handleLogout = () => {
-    localStorage.removeItem("user");   // امسح بيانات المستخدم
-    localStorage.removeItem("token");  // امسح التوكن
-    setUser(null);  
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);  // ← توجيه لصفحة الدخول
+    logout();
+    navigate("/");
   };
+
 
   return (
     <div dir='rtl' className="flex font-['Montserrat-Arabic'] text-sm text-secondary-900">   
@@ -139,7 +122,7 @@ const OwnerNav = ({user, setUser}) => {
               <div dir="rtl" className="flex items-center gap-6">
                 <div className="flex gap-4 w-fit border-l border-gray-300 pl-5 py-1">
                   <HeartIcon className="w-5 h-5"/>
-                  <BellIcon className="w-5 h-5"/>
+                  <NotificationsDropdown/>
                   {user?.user_type === "admin" && (
                     <Squares2X2Icon  onClick={() => navigate('/adminDashboard')} className={`h-5 w-5 cursor-pointer ${currentPath === '/adminDashboard' ? 'text-primary' : 'text-gray-900'}`} />
                   )}

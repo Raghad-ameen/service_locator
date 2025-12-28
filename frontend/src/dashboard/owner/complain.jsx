@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
+
 
 const ComplaintsPage = () => {
   const [complaints, setComplaints] = useState([]);
   const [selected, setSelected] = useState(null);
   const [reply, setReply] = useState("");
-
+  const { token } = useAuth();
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
@@ -13,7 +15,7 @@ const ComplaintsPage = () => {
           "http://127.0.0.1:8000/api/users/suggestions/",
           {
             headers: {
-              Authorization: `Token ${localStorage.getItem("token")}`,
+             Authorization: `Token ${token}`
             },
           }
         );

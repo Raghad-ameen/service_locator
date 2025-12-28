@@ -1,49 +1,22 @@
-import { useEffect, useState } from "react";
 import default_img from "../../public/media/user_profile/default.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HeartIcon } from "@heroicons/react/24/outline";
-import { BellIcon } from "@heroicons/react/24/outline";
 import { Squares2X2Icon, BuildingStorefrontIcon  } from '@heroicons/react/24/outline';
 import logo from "../../public/logo.png"
 import Search from "../component/search";
 import Login from "../account/LoginForm";
 import RegisterForm from "../account/RegisterForm";
-import { useLocation } from 'react-router-dom';
-const Navbar = ({ user, setUser, activeModal, setActiveModal }) => {
+import NotificationsDropdown from "../component/NotificationsDropdown";
+import { useAuth } from "../context/AuthContext";
+
+const Navbar = ({ activeModal, setActiveModal }) => {
+  const { user, logout } = useAuth();
   const navigate= useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
-  const [hasService, setHasService] = useState(false);
-  const token = localStorage.getItem("token");
+  const navbarType = user ? "logged" : "guest";
 // console.log("بيانات المستخدم:", user);
 // console.log("الهيدر المرسل:", { Authorization: `Token ${token}` });
-  useEffect(() => {
-    if (token) {
-      fetch("http://127.0.0.1:8000/api/users/user/", {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setUser(data);
-          setHasService(data.has_service);
-        })
-        .catch((error) => console.error("خطأ في جلب بيانات المستخدم:", error));
-    }
-  }, []);
-  useEffect(() => {
-    if (user && token) {
-      setActiveModal(null); // ← يغلق الفورم بعد نجاح الدخول
-    }
-  }, [user, token]);
-
-    let navbarType;
-    if (!token) {
-        navbarType = "guest"; // الحالة 1
-    } else{
-        navbarType = "logged_no_service"; // الحالة 2
-    }
 
   return (
     <nav className=" fixed z-50 w-full rounded-b-3xl bg-white border-b border-gray-200 shadow-md shadow-primary/5 font-['Montserrat-Arabic'] text-sm text-secondary-900 py-4 px-20">
@@ -61,11 +34,11 @@ const Navbar = ({ user, setUser, activeModal, setActiveModal }) => {
           {/* search */}
           <Search/>
           {/*icon and user info*/}
-          {navbarType === "logged_no_service" && (
+          {user && (
             <div dir="rtl" className="flex items-center gap-6">
               <div className="flex gap-4 w-fit border-l border-gray-300 pl-5 py-1">
                 <HeartIcon className="w-5 h-5"/>
-                <BellIcon className="w-5 h-5"/>
+                <NotificationsDropdown />
                 {user?.user_type === "admin" && (
                     <Squares2X2Icon onClick={() => navigate('/adminDashboard')} className={`h-5 w-5 cursor-pointer ${currentPath === '/adminDashboard' ? 'text-primary' : 'text-gray-900'}`} />
                 )}
@@ -92,25 +65,23 @@ const Navbar = ({ user, setUser, activeModal, setActiveModal }) => {
             <div className="flex gap-10">
               {((user?.user_type !== "owner" && !user?.has_service) || navbarType === "guest") && (
                 <div className="w-fit">
-                  <button onClick={() => navigate('Create')} className="border border-primary rounded-xl text-primary px-4 py-2 w-30 cursor-pointer"
+                  <button onClick={() => navigate('/Create')} className="border border-primary rounded-xl text-primary px-4 py-2 w-30 cursor-pointer"
                   > أضف خدمتك </button>
                 </div>
               )}
-              {navbarType === "guest" && (
+              {!user && (
                 <div className="w-fit">
                   <button onClick={() => setActiveModal('login')} className="border border-primary rounded-xl text-primary px-4 py-2 w-32 cursor-pointer"> تسجيل الدخول</button>
                   {activeModal === 'login' && (
                     <Login
                       onClose={() => setActiveModal(null)}
                       onSwitch={() => setActiveModal('signup')}
-                      setUser={setUser}
                     />
                   )}
                   {activeModal === 'signup' && (
                     <RegisterForm
                       onClose={() => setActiveModal(null)}
                       onSwitch={() => setActiveModal('login')}
-                      setUser={setUser}
                     />
                   )}
                 </div>

@@ -1,9 +1,11 @@
-import React from 'react'
-import {CameraIcon} from '@heroicons/react/24/outline'
+import {CameraIcon ,ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { toast } from "react-toastify";
+import ConfirmToast from '../../component/ConfirmToast';
+
 
 const advertisement = () => {
   const [packages, setPackages] = useState([]);
@@ -13,6 +15,8 @@ const advertisement = () => {
   const [startDate, setStartDate] = useState(null);
   const [packageId, setPackageId] = useState("");
   const [ads, setAds] = useState([]);
+  const [errors, setErrors] = useState({});
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -31,20 +35,49 @@ const advertisement = () => {
       .catch(err => console.error("خطأ تحميل الإعلانات:", err));
   }, []);
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!image) {
+      newErrors.image = "صورة الإعلان مطلوبة";
+    }
+
+    if (!description.trim()) {
+      newErrors.description = "وصف الإعلان مطلوب";
+    } else if (description.length < 10) {
+      newErrors.description = "الوصف يجب أن يكون 10 أحرف على الأقل";
+    }
+
+    if (!startDate) {
+      newErrors.startDate = "تاريخ بدء الإعلان مطلوب";
+    }
+
+    if (!packageId) {
+      newErrors.package = "يرجى اختيار باقة إعلان";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const submitAd = async (e) => {
     e.preventDefault();
 
-    if (!image || !description || !startDate || !packageId) {
-      alert("يرجى تعبئة جميع الحقول");
-      return;
-    }
-    const today = new Date().toISOString().split("T")[0];
+    if (!validateForm()) return;
+
+    const toLocalYMD = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+    const formattedStartDate = toLocalYMD(startDate);
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("image", image);
     formData.append("description", description);
-    formData.append("start_date", today);
-   formData.append("package", packageId);
+    formData.append("start_date", formattedStartDate);
+    formData.append("package", packageId);
 
     await axios.post(
       "http://127.0.0.1:8000/api/services/provider/ads/",
@@ -57,7 +90,12 @@ const advertisement = () => {
       }
     );
 
-    alert("تم إرسال طلب الإعلان بنجاح");
+    toast.success("تم إرسال طلب الإعلان بنجاح");
+    setImage(null);
+    setDescription("");
+    setStartDate(null);
+    setPackageId("");
+    setSelectedPackage(null);
   };
 
   const calculateEndDate = () => {
@@ -97,6 +135,29 @@ const advertisement = () => {
     }
   };
 
+  const showConfirmToast = ({message, onConfirm}) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-red-600" />}
+          title ="حذف إعلان"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
+  };
 
   return (
     <div className="flex-1 p-4 md:p-10 bg-primary-50/30 font-['Montserrat-Arabic'] font-light text-[15px]">
@@ -109,9 +170,10 @@ const advertisement = () => {
             <div className="text-right">
               <p className="mb-2 font-normal">تم قبول الإعلان</p>
               <p className="text-gray-700 mb-2 w-150">{ad.description}</p>
+              <p className="text-gray-500 text-xs mt-4 w-150">سيستمر الاعلان من <span className='text-primary mx-1'>{ad.start_date}</span> الى <span className='text-primary mx-1'>{ad.end_date}</span></p>
             </div>
 
-            <button onClick={() => handleDeleteAds(ad.id)} className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-600 transition w-fit cursor-pointer">
+            <button onClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذا الإعلان؟", onConfirm: () => handleDeleteAds(ad.id),}) } className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-600 transition w-fit cursor-pointer">
               حذف الإعلان
             </button>
           </div>
@@ -133,6 +195,9 @@ const advertisement = () => {
               onChange={(e) => setImage(e.target.files[0])}
             />
           </div>
+          {errors.image && (
+            <p className="text-red-500 text-xs -mt-3">{errors.image}</p>
+          )}
           <div className='flex flex-col gap-2'>
             <label className="text-gray-600 font-light">اكتب وصفاً للإعلان</label>
             <textarea
@@ -141,9 +206,11 @@ const advertisement = () => {
               placeholder="اكتب هنا"
               className="w-full border border-gray-300 rounded-lg px-3 py-2"
             />
-            <p className="text-sm text-gray-500 mt-1">
-            </p>
+            {errors.description && (
+              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+            )}
           </div>
+
           <div className="flex flex-col md:flex-row gap-6">
 
             {/* تاريخ بدء الإعلان */}
@@ -160,6 +227,9 @@ const advertisement = () => {
                   onChangeRaw={(e) => e.preventDefault()}
                 />
               </div>
+              {errors.startDate && (
+                <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>
+              )}
             </div>
 
             {/* باقة الإعلان */}
@@ -184,6 +254,9 @@ const advertisement = () => {
                   ))}
                 </select>
               </div>
+              {errors.package && (
+                <p className="text-red-500 text-xs mt-1">{errors.package}</p>
+              )}
             </div>
             {startDate && selectedPackage && (
               <div className="text-gray-600 mt-4 text-sm">

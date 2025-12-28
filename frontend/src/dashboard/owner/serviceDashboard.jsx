@@ -17,7 +17,7 @@ ChartJS.register(
   Filler,
   Tooltip
 );
-import {ChartCard, StatCard, ProductItem, SuggestionItem} from '../../component/chart'; 
+import {StatCard, ProductItem, SuggestionItem} from '../../component/chart'; 
 
 const serviceDashboard=()=> {
   return (

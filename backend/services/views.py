@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters, status, permissions, filters
+from rest_framework import viewsets, filters, status, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,10 +6,14 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus
 from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
-from users.models import Notification, Suggestion
-from django.shortcuts import render
+from users.models import Suggestion, CustomUser
 from django.utils import timezone
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from notifications.services import send_notification
+from datetime import timedelta
+from rest_framework.permissions import IsAdminUser
+from datetime import date
+from calendar import monthrange
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -78,6 +82,11 @@ class ServiceViewSet(viewsets.ModelViewSet):
                 user.user_type = "owner"
                 user.save()
 
+        send_notification(
+            user_id=service.owner.id,
+            message=f"✅ تم قبول خدمتك ({service.title}) بنجاح"
+        )
+
         return Response({'status': 'approved'})
 
     #عرض الخدمة الخاصة لصاحب الخدمة
@@ -101,9 +110,9 @@ class ServiceViewSet(viewsets.ModelViewSet):
         reason = request.data.get('reason')
 
         # أنشئ إشعار لصاحب الخدمة
-        Notification.objects.create(
-            user=service.owner,
-            message=f"تم رفض خدمتك ({service.title}) بسبب: {reason}"
+        send_notification(
+            user_id=service.owner.id,
+            message=f"❌ تم رفض خدمتك ({service.title}) بسبب: {reason}"
         )
 
         # احذف الخدمة من قاعدة البيانات
@@ -153,6 +162,25 @@ class ProductViewSet(viewsets.ModelViewSet):
         if instance.service.owner != self.request.user:
             raise PermissionDenied("غير مصرح لك")
         instance.delete()
+        
+    def perform_create(self, serializer):
+        service = Service.objects.filter(
+        owner=self.request.user,
+        status="approved"
+        ).first()
+
+        if not service:
+            raise ValidationError({
+                "service": "يجب أن يكون لديك خدمة مقبولة لإضافة منتجات"
+            })
+
+        serializer.save(service=service)
+        
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
 
 class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
@@ -299,4 +327,146 @@ class OwnerDashboard(APIView):
                 {"user": s.user.get_full_name(), "message": s.message}
                 for s in latest_suggestions
             ]
+        })
+
+class AdminDashboardStatsAPIView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        today = timezone.now().date()
+        week_ago = today - timedelta(days=7)
+        prev_week_start = week_ago - timedelta(days=7)
+
+        # ======================
+        # Counters (الكروت)
+        # ======================
+        services_count = Service.objects.filter(status="approved").count()
+        users_count = CustomUser.objects.count()
+        Category_count = Category.objects.count()  # أو Department لو عندك موديل مستقل
+
+        # ======================
+        # This week
+        # ======================
+        users_this_week = CustomUser.objects.filter(
+            date_joined__date__gte=week_ago
+        ).count()
+
+        services_this_week = Service.objects.filter(
+            status="approved",
+            created_at__date__gte=week_ago
+        ).count()
+
+        # ======================
+        # Previous week
+        # ======================
+        users_prev_week = CustomUser.objects.filter(
+            date_joined__date__range=[prev_week_start, week_ago]
+        ).count()
+
+        services_prev_week = Service.objects.filter(
+            created_at__date__range=[prev_week_start, week_ago]
+        ).count()
+
+        # ======================
+        # Percentage helper
+        # ======================
+        def percent_change(current, previous):
+            if previous == 0:
+                return 100 if current > 0 else 0
+            return round(((current - previous) / previous) * 100)
+
+        return Response({
+            "counts": {
+                "services": services_count,
+                "users": users_count,
+                "Category": Category_count,
+            },
+            "weekly": {
+                "users": {
+                    "count": users_this_week,
+                    "change": percent_change(users_this_week, users_prev_week)
+                },
+                "services": {
+                    "count": services_this_week,
+                    "change": percent_change(services_this_week, services_prev_week)
+                }
+            }
+        })
+
+class AdminMonthlyServicesStatsAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        year = int(request.query_params.get("year"))
+        month = int(request.query_params.get("month"))
+
+        last_day = monthrange(year, month)[1]
+
+        weeks = [
+            (1, 1, 7),
+            (2, 8, 14),
+            (3, 15, 21),
+            (4, 22, last_day),
+        ]
+
+        data = []
+
+        for _, start_day, end_day in weeks:
+            start = date(year, month, start_day)
+            end = date(year, month, end_day)
+
+            count = Service.objects.filter(
+                status="approved",
+                created_at__date__range=[start, end]
+            ).count()
+
+            data.append(count)
+
+        return Response({
+            "labels": [
+                "الأسبوع 1",
+                "الأسبوع 2",
+                "الأسبوع 3",
+                "الأسبوع 4",
+            ],
+            "data": data,
+        })
+      
+class AdminMonthlyUsersStatsAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        year = int(request.query_params.get("year"))
+        month = int(request.query_params.get("month"))
+
+        last_day = monthrange(year, month)[1]
+
+        weeks = [
+            (1, 1, 7),
+            (2, 8, 14),
+            (3, 15, 21),
+            (4, 22, last_day),
+        ]
+
+
+        data = []
+
+        for _, start_day, end_day in weeks:
+            start = date(year, month, start_day)
+            end = date(year, month, end_day)
+
+            count = CustomUser.objects.filter(
+                date_joined__date__range=[start, end]
+            ).count()
+
+            data.append(count)
+
+        return Response({
+            "labels": [
+                "الأسبوع 1",
+                "الأسبوع 2",
+                "الأسبوع 3",
+                "الأسبوع 4"
+            ],
+            "data": data,
         })

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { motion } from 'framer-motion';
 import { useNavigate } from "react-router-dom";
 import { CameraIcon } from "@heroicons/react/24/outline";
-const RegisterForm = ({onClose, onSwitch, setUser}) => {
+import { useAuth } from "../context/AuthContext";
+const RegisterForm = ({ onClose, onSwitch }) => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -104,23 +106,24 @@ const RegisterForm = ({onClose, onSwitch, setUser}) => {
       }
 
       if (res.status === 201 && data) {
-        // ✅ حفظ بيانات المستخدم محليًا
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data));
-        localStorage.setItem("user_type", data.user_type);
-        localStorage.setItem("has_service", data.has_service);
-
-        // ✅ تحديث حالة المستخدم في التطبيق
-        setUser({
-          id: data.id,
-          username: data.username,
-          email: data.email,
-          phone: data.phone,
-          profile_image: data.profile_image,
-          user_type: data.user_type,
-          user_type_display: data.user_type === "admin" ? "مشرف" : (data.user_type === "owner" ? "صاحب خدمة" : "مستخدم عادي"),
-          has_service: data.has_service
-        });
+        login(
+          {
+            id: data.id,
+            username: data.username,
+            email: data.email,
+            phone: data.phone,
+            profile_image: data.profile_image,
+            user_type: data.user_type,
+            user_type_display:
+              data.user_type === "admin"
+                ? "مشرف"
+                : data.user_type === "owner"
+                ? "صاحب خدمة"
+                : "مستخدم عادي",
+            has_service: data.has_service,
+          },
+          data.token
+        );
         setFormData({
           username: "",
           email: "",

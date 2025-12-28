@@ -1,15 +1,18 @@
-import {useState, useEffect} from 'react';
+import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { Outlet, NavLink} from 'react-router-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon , UserGroupIcon, Square3Stack3DIcon, ShoppingBagIcon, MegaphoneIcon, UserCircleIcon, ArrowRightStartOnRectangleIcon, HeartIcon, BellIcon, Squares2X2Icon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import logo from "../../../public/logo.png";
 import Search from '../../component/search';
+import NotificationsDropdown from '../../component/NotificationsDropdown';
+import axios from "axios";
 
-const AdminNav = ({user, setUser}) => {
+const AdminNav = () => {
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
-  const token = localStorage.getItem("token");
   const [pendingCount, setPendingCount] = useState(0);
   const [AdvpendingCount, setAdvPendingCount] = useState(0);
   const hideSearchOff = ["/adminDashboard", "/manageAdv"];
@@ -24,59 +27,51 @@ const AdminNav = ({user, setUser}) => {
     { to: "/serviceslist", label: "إدارة الخدمات", icon: ShoppingBagIcon },
     { to: "/manageAdv", label: "إدارة الإعلانات", icon: MegaphoneIcon },
   ];
-  //بيانات المستخدم
+  //بيانات الخدمة
   useEffect(() => {
-    if (token) {
-      fetch("http://127.0.0.1:8000/api/users/user/", {
+    if (!token) return;
+
+    axios
+      .get("http://127.0.0.1:8000/api/services/service/", {
         headers: {
           Authorization: `Token ${token}`,
         },
       })
-        .then((res) => res.json())
-        .then((data) => {
-          setUser(data);
-        })
-        .catch((error) => console.error("خطأ في جلب بيانات المستخدم:", error));
-    }
-  }, []);
-  //بيانات الخدمة
-  useEffect(() => {
-    if (token) {
-      fetch("http://127.0.0.1:8000/api/services/service/", {
-        headers: { Authorization: `Token ${token}` }
+      .then((res) => {
+        const count = res.data.filter(
+          (s) => s.status === "pending"
+        ).length;
+        setPendingCount(count);
       })
-        .then(res => res.json())
-        .then(data => {
-          const count = data.filter(s => s.status === "pending").length;
-          setPendingCount(count);
-        })
-        .catch(err => console.error("خطأ في جلب الخدمات:", err));
-    }
-  }, []);
+      .catch((err) => {
+        console.error("خطأ في جلب الخدمات:", err);
+      });
+  }, [token]);
+
 
   useEffect(() => {
-    if (token) {
-      fetch("http://127.0.0.1:8000/api/services/admin/ads/pending/", {
-        headers: { Authorization: `Token ${token}` }
+    if (!token) return;
+
+    axios
+      .get("http://127.0.0.1:8000/api/services/admin/ads/pending/", {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
       })
-        .then(res => res.json())
-        .then(data => {
-          setAdvPendingCount(data.length);
-        })
-        .catch(err => console.error("خطأ في جلب الخدمات:", err));
-    }
-  }, []);
+      .then((res) => {
+        setAdvPendingCount(res.data.length);
+      })
+      .catch((err) => {
+        console.error("خطأ في جلب الإعلانات:", err);
+      });
+  }, [token]);
+
 
   //logout
   const handleLogout = () => {
-    localStorage.removeItem("user");   // امسح بيانات المستخدم
-    localStorage.removeItem("token");  // امسح التوكن
-    setUser(null);  
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);  // ← توجيه لصفحة الدخول
+    logout();
+    navigate("/");
   };
-
 
   return (
     <div dir='rtl' className="flex font-['Montserrat-Arabic'] text-sm text-secondary-900">   
@@ -153,7 +148,7 @@ const AdminNav = ({user, setUser}) => {
               <div dir="rtl" className="flex items-center gap-6">
                 <div className="flex gap-4 w-fit border-l border-gray-300 pl-5 py-1">
                   <HeartIcon className="w-5 h-5"/>
-                  <BellIcon className="w-5 h-5"/>
+                  <NotificationsDropdown/>
                   {user?.user_type === "admin" && (
                     <Squares2X2Icon  onClick={() => navigate('/adminDashboard')} className='h-5 w-5 cursor-pointer text-primary'/>
                   )}

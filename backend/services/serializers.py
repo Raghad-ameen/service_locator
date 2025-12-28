@@ -66,42 +66,69 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    deleted_images = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
+
     class Meta:
         model = Product
-        fields = ['service', 'name', 'description', 'price', 'photos']
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "photos",
+            "deleted_images",
+        ]
 
+    # =========================
+    # CREATE
+    # =========================
     def create(self, validated_data):
-        request = self.context["request"]
-        service = validated_data["service"]
-
-        if service.owner != request.user:
-            raise serializers.ValidationError("لا تملك هذه الخدمة")
-
         photos = validated_data.pop("photos", [])
+        deleted_images = validated_data.pop("deleted_images", [])
+
         product = Product.objects.create(**validated_data)
 
+        # حفظ الصور الجديدة
         for photo in photos:
-            ProductImage.objects.create(product=product, photo=photo)
+            ProductImage.objects.create(
+                product=product,
+                photo=photo
+            )
 
         return product
 
-
+    # =========================
+    # UPDATE
+    # =========================
     def update(self, instance, validated_data):
-        photos = validated_data.pop("photos", None)
+        photos = validated_data.pop("photos", [])
+        deleted_images = validated_data.pop("deleted_images", [])
 
-        # تحديث بيانات المنتج
-        instance.name = validated_data.get("name", instance.name)
-        instance.description = validated_data.get("description", instance.description)
-        instance.price = validated_data.get("price", instance.price)
+        # تحديث الحقول الأساسية
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
         instance.save()
 
-        # إذا المستخدم أرسل صور جديدة → نضيفها فقط
-        if photos is not None:
-            for photo in photos:
-                ProductImage.objects.create(product=instance, photo=photo)
+        # حذف الصور المطلوبة
+        if deleted_images:
+            ProductImage.objects.filter(
+                id__in=deleted_images,
+                product=instance
+            ).delete()
+
+        # إضافة صور جديدة
+        for photo in photos:
+            ProductImage.objects.create(
+                product=instance,
+                photo=photo
+            )
 
         return instance
-    
 class AdPackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdPackage

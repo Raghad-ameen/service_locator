@@ -29,7 +29,7 @@ const manageService = () => {
     descriptionRef.current.focus();
   }
   if (activeField === 'category' && categoryRef.current) {
-    descriptionRef.current.focus();
+    categoryRef.current.focus();
   }
   if (activeField === 'email' && emailRef.current) {
     emailRef.current.focus();

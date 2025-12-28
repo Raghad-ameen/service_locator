@@ -15,7 +15,7 @@ const services = () => {
   const [loading, setLoading] = useState(true);
 
   const filteredServices = category
-  ? services.filter(s => String(s.category.id) === String(category))
+  ? services.filter(s => s.category && String(s.category.id) === String(category))
   : services;
 
   useEffect(() => {

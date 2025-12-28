@@ -108,6 +108,14 @@ const Create = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const isFormValid = validateForm();
+    const isWorkHoursValid = workHoursRef.current?.validate();
+
+    if (!isFormValid || !isWorkHoursValid) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
@@ -120,16 +128,6 @@ const Create = () => {
     formData.append('whatsapp', whatsapp);
     if (coverImage) formData.append('cover_image', coverImage);
     if (logoImage) formData.append('logo_image', logoImage);
-
-    const isFormValid = validateForm();
-const isWorkHoursValid = workHoursRef.current?.validate();
-
-if (!isFormValid || !isWorkHoursValid) {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  return;
-}
-
-
     try {
       // 1️⃣ إنشاء الخدمة
       const res = await axios.post('http://127.0.0.1:8000/api/services/service/', formData, {

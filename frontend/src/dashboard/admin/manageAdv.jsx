@@ -1,0 +1,376 @@
+import { useEffect, useState } from "react";
+import { TrashIcon, PencilIcon } from "../../component/icons";
+import default_img from "../../../public/media/user_profile/default.png";
+import {
+  CheckIcon,
+  NoSymbolIcon,
+  XMarkIcon,
+  PlusCircleIcon,
+} from "@heroicons/react/24/outline";
+import axios from "axios";
+
+const ManageAdv = () => {
+  const token = localStorage.getItem("token");
+
+  const [activeSection, setActiveSection] = useState("pending");
+  const [ads, setAds] = useState([]);
+  const [packages, setPackages] = useState([]);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [selectedAdId, setSelectedAdId] = useState(null);
+
+  const [showPackageModal, setShowPackageModal] = useState(false);
+  const [editingPackage, setEditingPackage] = useState(null);
+  const [packageForm, setPackageForm] = useState({
+    name: "",
+    duration_days: "",
+    price: "",
+  });
+  const [formErrors, setFormErrors] = useState({});
+
+
+  const openCreatePackage = () => {
+    setEditingPackage(null);
+    setPackageForm({ name: "", duration_days: "", price: "" });
+    setFormErrors({});
+    setShowPackageModal(true);
+  };
+
+  const openEditPackage = (pkg) => {
+    setEditingPackage(pkg);
+    setPackageForm({
+      name: pkg.name,
+      duration_days: pkg.duration_days,
+      price: pkg.price,
+    });
+    setFormErrors({});
+    setShowPackageModal(true);
+  };
+
+  const savePackage = async (e) => {
+    e.preventDefault();
+
+    const errors = {};
+
+    // الاسم
+    if (!packageForm.name.trim()) {
+      errors.name = "اسم الباقة مطلوب";
+    }
+
+    // المدة
+    if (!packageForm.duration_days) {
+      errors.duration_days = "مدة الباقة مطلوبة";
+    } else if (
+      isNaN(packageForm.duration_days) ||
+      Number(packageForm.duration_days) <= 0
+    ) {
+      errors.duration_days = "المدة يجب أن تكون رقمًا أكبر من صفر";
+    }
+
+    // السعر
+    if (!packageForm.price) {
+      errors.price = "سعر الباقة مطلوب";
+    } else if (
+      isNaN(packageForm.price) ||
+      Number(packageForm.price) <= 0
+    ) {
+      errors.price = "السعر يجب أن يكون رقمًا أكبر من صفر";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
+
+    const url = editingPackage
+      ? `http://127.0.0.1:8000/api/services/admin/packages/${editingPackage.id}/`
+      : `http://127.0.0.1:8000/api/services/admin/packages/`;
+
+    const method = editingPackage ? "patch" : "post";
+
+    try {
+      await axios({
+        method,
+        url,
+        data: packageForm,
+        headers: { Authorization: `Token ${token}` },
+      });
+
+      handleCloseModal();
+      fetchPackages();
+    } catch (err) {
+      console.error("خطأ في حفظ الباقة:", err);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowPackageModal(false);
+    setEditingPackage(null);
+    setPackageForm({ name: "", duration_days: "", price: "" });
+  };
+
+  /* ================= FETCH ================= */
+  useEffect(() => {
+    fetchPendingAds();
+    fetchPackages();
+  }, []);
+
+  const fetchPendingAds = async () => {
+    const res = await axios.get(
+      "http://127.0.0.1:8000/api/services/admin/ads/pending/",
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    setAds(res.data);
+    setPendingCount(res.data.length);
+  };
+
+  const fetchPackages = async () => {
+    const res = await axios.get(
+      "http://127.0.0.1:8000/api/services/admin/packages/",
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    setPackages(res.data);
+  };
+
+  /* ================= ACTIONS ================= */
+  const approveAd = async (id) => {
+    await axios.patch(
+      `http://127.0.0.1:8000/api/services/admin/ads/${id}/`,
+      { status: "approved" },
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    fetchPendingAds();
+  };
+
+  const rejectAd = async () => {
+    await axios.patch(
+      `http://127.0.0.1:8000/api/services/admin/ads/${selectedAdId}/`,
+      { status: "rejected", delete_allowed: true },
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    setShowRejectForm(false);
+    setRejectReason("");
+    fetchPendingAds();
+  };
+
+  const deletePackage = async (id) => {
+    await axios.delete(
+      `http://127.0.0.1:8000/api/services/admin/packages/${id}/`,
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    fetchPackages();
+  };
+
+  const formatDate = (date) =>
+    new Date(date).toLocaleDateString("ar-YE", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+  });
+
+
+  /* ================= UI ================= */
+  return (
+    <div dir="rtl" className="p-6 text-sm font-light">
+      <h2 className="m-4 text-lg text-primary-600">إدارة الإعلانات</h2>
+
+      {/* Tabs */}
+      <div className="flex gap-10 mx-10 my-5 font-normal">
+        <button
+          onClick={() => setActiveSection("pending")}
+          className={`pb-2 cursor-pointer relative after:absolute after:-bottom-2 after:right-0 after:h-0.5 after:w-0 after:bg-primary transition duration-700 after:transition-all ${activeSection === "pending" ? "text-primary after:w-full" : "hover:text-primary-600 hover:after:w-full text-gray-900"}`}
+        >
+          إعلانات بانتظار الموافقة
+          {pendingCount > 0 && <span className="text-red-500 mr-1">*</span>}
+        </button>
+        <button
+          onClick={() => setActiveSection("package")}
+          className={`pb-2 cursor-pointer relative after:absolute after:-bottom-2 after:right-0 after:h-0.5 after:w-0 after:bg-primary transition duration-700 after:transition-all ${activeSection === "package" ? "text-primary after:w-full" : "hover:text-primary-600 hover:after:w-full text-gray-900"}`}
+        >
+          باقات الإعلانات
+        </button>
+      </div>
+
+      {/* ================= PACKAGES ================= */}
+      {activeSection === "package" && (
+        <div className="px-10 mt-10">
+          <button
+            onClick={openCreatePackage}
+            className="flex items-center gap-2 text-primary cursor-pointer font-normal"
+          >
+            <PlusCircleIcon className="w-6 h-6" />
+            باقة جديدة
+          </button>
+          <div className="grid grid-cols-5 gap-4 px-10 mt-10">
+            {packages.map((p) => (
+              <div key={p.id} className="p-4 flex flex-col items-center gap-4 border border-primary/40 rounded-xl">
+                <h3>{p.name}</h3>
+                <p className="text-gray-500">{p.duration_days} أيام</p>
+                <p className="text-gray-500">{p.price} ريال</p>
+
+                <div className="flex gap-3 self-end mt-2">
+                  <TrashIcon OnClick={() => deletePackage(p.id)} />
+                  <PencilIcon OnClick={() => openEditPackage(p)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ================= add or edit package MODAL ================= */}
+      {showPackageModal && (
+        <div onClick={(e) => e.target === e.currentTarget && handleCloseModal()}
+            className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 w-[50%]">
+            <div className="flex justify-between">
+              <h2>{editingPackage ? "تعديل الباقة" : "إضافة باقة جديدة"}</h2>
+              <XMarkIcon onClick={handleCloseModal} className="w-7 h-7 cursor-pointer"/>
+            </div>
+            <form onSubmit={savePackage} className="py-4 px-6 flex flex-col gap-6">
+              <div>
+                <label>اسم الباقة</label>
+                <input
+                  value={packageForm.name}
+                  onChange={(e) =>
+                    setPackageForm({ ...packageForm, name: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                />
+                {formErrors.name && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                )}
+              </div>
+              <div>
+                <label>المدة (أيام)</label>
+                <input
+                  type="number"
+                  min="1" 
+                  step="1"
+                  value={packageForm.duration_days}
+                  onChange={(e) =>
+                    setPackageForm({
+                      ...packageForm,
+                      duration_days: e.target.value,
+                    })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                />
+                {formErrors.duration_days && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.duration_days}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label>السعر</label>
+                <input
+                  type="number"
+                  min="1000" 
+                  step="1"
+                  value={packageForm.price}
+                  onChange={(e) =>
+                    setPackageForm({ ...packageForm, price: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                />
+                {formErrors.price && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.price}</p>
+                )}
+              </div>
+              <button className="self-end bg-primary text-white px-4 py-2 rounded">
+                {editingPackage ? "حفظ التعديلات" : "إضافة"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= PENDING ADS ================= */}
+      {activeSection === "pending" && (
+        <div className="mt-10 border rounded-lg">
+          {ads.map((ad) => (
+            <div key={ad.id} className="p-5 border-b">
+              <p className="text-xs text-primary mb-3">
+                {new Date(ad.start_date).toLocaleDateString("ar")}
+              </p>
+              <div className="flex justify-between">
+                <div className="flex gap-4">
+                  <img
+                    src={ad.image || default_img}
+                    className="w-12 h-12 rounded"
+                  />
+                  <div>
+                    <p>{ad.owner_name}</p>
+                    <p>{ad.service_title}</p>
+                    <p className="text-xs text-gray-500">{ad.description}</p>
+                    <p className="text-xs">
+                      مدة الباقة: ({ad.package.duration_days} يوم)
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      من <span className="font-medium">{formatDate(ad.start_date)}</span>
+                      {" "}إلى{" "}
+                      <span className="font-medium">{formatDate(ad.end_date)}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => approveAd(ad.id)}
+                    className="flex items-center gap-1 text-green-600"
+                  >
+                    <CheckIcon className="w-4 h-4" /> قبول
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedAdId(ad.id);
+                      setShowRejectForm(true);
+                    }}
+                    className="flex items-center gap-1 text-red-600"
+                  >
+                    <NoSymbolIcon className="w-4 h-4" /> رفض
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ================= REJECT MODAL ================= */}
+      {showRejectForm && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-80">
+            <div className="flex justify-between mb-4">
+              <h3>سبب الرفض</h3>
+              <XMarkIcon
+                className="w-6 h-6 cursor-pointer"
+                onClick={() => setShowRejectForm(false)}
+              />
+            </div>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="w-full border rounded p-2 text-xs"
+            />
+            <button
+              onClick={rejectAd}
+              className="mt-4 bg-red-500 text-white px-4 py-1 rounded"
+            >
+              تأكيد
+            </button>
+          </div>
+        </div>
+      )}
+      
+    </div>
+  );
+};
+
+export default ManageAdv;

@@ -1,7 +1,9 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { PlusIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, PlusCircleIcon, XMarkIcon,ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { PencilIcon, TrashIcon } from "../../component/icons";
+import { toast } from "react-toastify";
+import ConfirmToast from '../../component/ConfirmToast';
 
 const ProductsPage = () => {
 
@@ -16,8 +18,11 @@ const ProductsPage = () => {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [price, setPrice] = useState("");
-
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState({
+    name: "",
+    price: "",
+    images: "",
+  });
 
   // ================== جلب المنتجات ==================
   useEffect(() => {
@@ -66,8 +71,9 @@ const ProductsPage = () => {
     setName("");
     setDesc("");
     setPrice("");
-    setNewImages([]); 
+    setNewImages([]);
     setShowModal(true);
+    setExistingImages("");
   };
 
   // ================== فتح مودال تعديل ==================
@@ -83,14 +89,48 @@ const ProductsPage = () => {
 
     setShowModal(true);
   };
+
+  const validateForm = () => {
+    const newErrors = {
+      name: "",
+      price: "",
+      images: "",
+    };
+
+    // الاسم
+    if (!name.trim()) {
+      newErrors.name = "اسم المنتج مطلوب";
+    }
+
+    // السعر
+    if (!price || Number(price) <= 0) {
+      newErrors.price = "السعر مطلوب ويجب أن يكون أكبر من صفر";
+    }
+
+    // الصور
+    if (!editingProduct) {
+      // إضافة
+      if (newImages.length === 0) {
+        newErrors.images = "يجب إضافة صورة واحدة على الأقل";
+      }
+    } else {
+      // تعديل
+      if (existingImages.length === 0 && newImages.length === 0) {
+        newErrors.images = "يجب أن يحتوي المنتج على صورة واحدة على الأقل";
+      }
+    }
+
+    setErrors(newErrors);
+
+    // لو في أي خطأ رجّع false
+    return !Object.values(newErrors).some((err) => err !== "");
+  };
+
   // ================== حفظ المنتج ==================
   const handleSaveProduct = async (e) => {
     e.preventDefault();
 
-    if (!name || !price) {
-      setErrorMessage("الاسم والسعر مطلوبان");
-      return;
-    }
+    if (!validateForm()) return;
 
     const token = localStorage.getItem("token");
     const formData = new FormData();
@@ -120,7 +160,7 @@ const ProductsPage = () => {
             },
           }
         );
-      } 
+      }
       // ➕ إضافة
       else {
         await axios.post(
@@ -161,6 +201,30 @@ const ProductsPage = () => {
     setDeletedImageIds([]);
   };
 
+  const showConfirmToast = ({message, onConfirm}) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-red-600" />}
+          title ="حذف منتج"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
+  };
+
   return (
     <div className="">
       {/* ---------------------- الهيدر ---------------------- */}
@@ -197,7 +261,7 @@ const ProductsPage = () => {
                   <td className="p-2 flex-1">
                     <img
                       src={prod.images[0]?.photo}
-                      onClick={() => {setExistingImages(prod.images);setShowModal("preview");}}
+                      onClick={() => { setExistingImages(prod.images); setShowModal("preview"); }}
                       className="w-14 h-14 rounded cursor-pointer object-cover mx-auto"
                     />
                   </td>
@@ -213,7 +277,7 @@ const ProductsPage = () => {
                     />
 
                     <TrashIcon
-                      OnClick={() => deleteProduct(prod.id)}
+                      OnClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذا المنتج ؟", onConfirm: () => deleteProduct(prod.id),}) }
                       className="cursor-pointer"
                     />
                   </td>
@@ -247,9 +311,6 @@ const ProductsPage = () => {
                 onClick={closeModal}
               />
             </div>
-
-            {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
-
             {/* صور المنتج الحالية عند التعديل */}
             {existingImages.length > 0 && (
               <div className="grid grid-cols-8 gap-4 my-4">
@@ -314,7 +375,9 @@ const ProductsPage = () => {
                   }}
                 />
               </div>
-
+              {errors.images && (
+                <span className="text-xs text-red-500 -mt-4">{errors.images}</span>
+              )}
               {/* الاسم */}
               <div className="flex items-center gap-4">
                 <label>الاسم</label>
@@ -325,7 +388,9 @@ const ProductsPage = () => {
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
-
+              {errors.name && (
+                <span className="text-xs text-red-500 -mt-4">{errors.name}</span>
+              )}
               {/* الوصف */}
               <div className="flex flex-col">
                 <label>الوصف</label>
@@ -335,7 +400,6 @@ const ProductsPage = () => {
                   onChange={(e) => setDesc(e.target.value)}
                 />
               </div>
-
               {/* السعر */}
               <div className="flex items-center gap-4">
                 <label>السعر</label>
@@ -345,8 +409,11 @@ const ProductsPage = () => {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                 />
-              </div>
 
+              </div>
+              {errors.price && (
+                <span className="text-xs text-red-500 -mt-4">{errors.price}</span>
+              )}
               <button className="w-fit self-end bg-primary text-white px-4 py-2 rounded">
                 {editingProduct ? "حفظ التعديلات" : "إضافة"}
               </button>

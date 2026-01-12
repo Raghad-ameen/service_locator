@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 const Login = ({onClose, onSwitch}) => {
   const { login } = useAuth ();
   const [formData, setFormData] = useState({
-    identifier: "",
+    phone: "",
     password: ""
   });
   const [message, setMessage] = useState("");
@@ -19,33 +19,22 @@ const Login = ({onClose, onSwitch}) => {
   const handleSubmit = async (e) => {
   e.preventDefault();
   setMessage("");
-  const { identifier, password } = formData;
+  const { phone, password } = formData;
   const errors = [];
 
   // تحقق من الحقول الفارغة
-  if (!identifier.trim()) {
-    errors.push("يرجى إدخال البريد الإلكتروني أو رقم الهاتف");
+  if (!phone.trim()) {
+    errors.push("يرجى إدخال رقم الهاتف");
   }
 
   if (!password.trim()) {
     errors.push("يرجى إدخال كلمة المرور");
   }
 
-  // تحقق من نوع الإدخال
-  const isNumeric = /^\d+$/.test(identifier); // أرقام فقط
-  const isEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(identifier); // صيغة بريد صحيحة
-
-  if (isNumeric) {
   // تحقق من رقم الهاتف
-  if (!/^7\d{8}$/.test(identifier)) {
+  if (!/^7\d{8}$/.test(phone)) {
     errors.push("رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام");
   }
-} else {
-  // محاولة إدخال بريد إلكتروني
-  if (!isEmailFormat) {
-    errors.push("صيغة البريد الإلكتروني غير صحيحة");
-  }
-}
 
   if (errors.length > 0) {
     setMessage( errors.join("، "));
@@ -57,7 +46,7 @@ const Login = ({onClose, onSwitch}) => {
     const res = await fetch("http://127.0.0.1:8000/api/users/login/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier, password })
+      body: JSON.stringify({ phone, password })
     });
 
     const data = await res.json();
@@ -68,7 +57,7 @@ const Login = ({onClose, onSwitch}) => {
       {
         id: data.id,
         username: data.username,
-        email: data.email,
+        // email: data.email,
         phone: data.phone,
         profile_image: data.profile_image,
         user_type: data.user_type,
@@ -83,7 +72,7 @@ const Login = ({onClose, onSwitch}) => {
       data.token
     );
   setFormData({
-      identifier: "",
+      phone: "",
       password: ""
     });
   if (data.user_type === "admin") {
@@ -128,13 +117,13 @@ const Login = ({onClose, onSwitch}) => {
               {message}
             </p>
           )}
-          {/* phone number or email */}
+          {/* phone number */}
           <input
             type="text"
-            name="identifier"
-            value={formData.identifier}
+            name="phone"
+            value={formData.phone}
             onChange={handleChange}
-            placeholder="البريد الإلكتروني أو رقم الهاتف"
+            placeholder=" رقم الهاتف"
             className="w-full border border-gray-400 bg-gray-50 px-5 py-3.5 rounded-xl"
           />
           {/*password*/}

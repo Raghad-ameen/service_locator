@@ -3,8 +3,11 @@ import {TrashIcon} from "../../component/icons"
 import { useLocation } from "react-router-dom";
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import default_img from "../../../public/media/user_profile/default.png";
-import {CheckIcon, NoSymbolIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {CheckIcon, NoSymbolIcon, XMarkIcon, ExclamationTriangleIcon} from "@heroicons/react/24/outline";
 import axios from 'axios';
+import ConfirmToast from "../../component/ConfirmToast";
+import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const ServicesList = () => {
   const location = useLocation();
@@ -15,7 +18,7 @@ const ServicesList = () => {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-
+  const {updateUser } = useAuth();
 //جلب بيانات الخدمة
   useEffect(() => {
     refreshServices();
@@ -47,6 +50,7 @@ const ServicesList = () => {
       prevServices.map(s => s.id === id ? { ...s, status: "approved" } : s)
     );
     refreshServices(); 
+    updateUser({ has_service: true });
   };
 //تحديث حالة الخدمة لمرفوضه
   const rejectService = async (id, reason) => {
@@ -73,6 +77,30 @@ const ServicesList = () => {
     } catch (err) {
       console.error('خطأ في حذف الخدمة:', err.response?.status, err.response?.data || err.message);
     }
+  };
+
+  const showConfirmToast = ({message, onConfirm}) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-red-600" />}
+          title ="حذف خدمة"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
   };
 //ايقاف
 
@@ -157,7 +185,7 @@ const ServicesList = () => {
                       <td className="p-2 flex-[2]">{service.category?.name}</td>
                       <td className="p-2 flex-1">{service.owner}</td>
                       <td className="p-2 flex-1 flex gap-4 items-center justify-center">
-                        <TrashIcon OnClick={() => handleDeleteService(service.id)} className="cursor-pointer" />
+                        <TrashIcon OnClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذه الخدمة ؟", onConfirm: () => handleDeleteService(service.id)}) } className="cursor-pointer" />
                         <CheckCircleIcon className="h-6 w-6 text-primary hover:text-red-600 cursor-pointer"/>
                       </td>
                     </tr>
@@ -194,7 +222,7 @@ const ServicesList = () => {
                   </div>
                   {/* الايميل \ رقم الهاتف \رقم الواتس */}
                   <div className="flex flex-col gap-2">
-                    <p><span className="text-gray-500 ml-2 text-xs font-light">البريد الالكتروني :</span>{s.email}</p>
+                    {/* <p><span className="text-gray-500 ml-2 text-xs font-light">البريد الالكتروني :</span>{s.email}</p> */}
                     <p><span className="text-gray-500 ml-2 text-xs font-light">رقم الهاتف :</span>{s.phone}</p>
                     <p><span className="text-gray-500 ml-2 text-xs font-light">رقم الواتس :</span>{s.whatsapp}</p>
                   </div>

@@ -11,13 +11,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
     username = serializers.CharField(required=True, allow_blank=False, max_length=150, validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="اسم المستخدم موجود مسبقًا")])
-    email = serializers.EmailField(required=True, validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="هذا البريد الإلكتروني مستخدم من قبل")])
+    # email = serializers.EmailField(required=True, validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="هذا البريد الإلكتروني مستخدم من قبل")])
     phone = serializers.CharField(required=True, validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="رقم الهاتف مستخدم من قبل")])
     # نرجع التوكن في الاستجابة
     token = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'password', 'password2', 'phone', 'profile_image', 'token')
+        fields = ('username', 'password', 'password2', 'phone', 'profile_image', 'token')
 
     def get_token(self, obj):
         # نحصل التوكن الخاص بالمستخدم الجديد
@@ -40,33 +40,27 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 #user login
 class LoginSerializer(serializers.Serializer):
-    identifier = serializers.CharField(required=True)  # يمكن أن يكون بريد أو رقم هاتف
+    phone = serializers.CharField(required=True)  # يمكن أن يكون بريد أو رقم هاتف
     password = serializers.CharField(write_only=True, required=True)
     
     def validate(self, attrs):
-        identifier = attrs.get('identifier')
+        phone = attrs.get('phone')
         password = attrs.get('password')
 
-        try:
-            # تحديد ما إذا كان المعرف بريد إلكتروني أو رقم هاتف
-            if '@' in identifier:
-                user_obj = CustomUser.objects.get(email=identifier)
-            else:
-                user_obj = CustomUser.objects.get(phone=identifier)
-        except CustomUser.DoesNotExist:
-            if '@' in identifier:
-                raise serializers.ValidationError( "لا يوجد حساب بهذا البريد")
-            else:
-                raise serializers.ValidationError( "لا يوجد حساب بهذا الرقم")
+        if not phone:
+            raise serializers.ValidationError("رقم الهاتف مطلوب")
 
-        # التحقق من كلمة المرور مباشرة
+        try:
+            user_obj = CustomUser.objects.get(phone=phone)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("لا يوجد حساب بهذا الرقم")
+
         if not user_obj.check_password(password):
             raise serializers.ValidationError("كلمة المرور غير صحيحة")
-        
-        # تمرير المستخدم إلى validated_data
+
+        # تمرير المستخدم
         attrs['user'] = user_obj
         return attrs
-
 #show list of user in admin dashboard
 class UserListSerializer(serializers.ModelSerializer):
     user_type_display = serializers.SerializerMethodField()
@@ -74,7 +68,7 @@ class UserListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'phone', 'profile_image', 'user_type', 'user_type_display', 'has_service']
+        fields = ['id', 'username', 'phone', 'profile_image', 'user_type', 'user_type_display', 'has_service']
         #to change userType to arabic in display
     def get_user_type_display(self, obj):
         return obj.get_user_type_display()

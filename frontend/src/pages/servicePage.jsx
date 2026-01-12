@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from "react-router-dom";
-import { HeartIcon, StarIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
-import { StarIcon as StarOutline, CameraIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolid, StarIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartOutline, StarIcon as StarOutline, CameraIcon } from '@heroicons/react/24/outline';
 import { Magicpen, Star } from '../component/icons';
 import default_image from '../assets/haraz.png';
-
+// ✅ context
+import { useFavorites } from "../context/favoriteContext";
 // خريطة
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -33,14 +34,21 @@ const ServicePage = () => {
   const [addreview, setAddreview] = useState(false);
   const [comments, setComments] = useState([]);
   const [userRating, setUserRating] = useState(null);
-  const [ratingSummary, setRatingSummary] = useState({average: 0, count: 0});
+  const [ratingSummary, setRatingSummary] = useState({ average: 0, count: 0 });
   const [message, setMessage] = useState("");
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [images, setImages] = useState([]);
-
+  const [loading, setLoading] = useState();
+  const [address, setAddress] = useState(null);
 
   const navigate = useNavigate();
+  // ✅ المفضلة من الكونتكست
+  const { favorites, toggleFavorite } = useFavorites();
+
+  // ⭐⭐ الحل هنا
+  const [isFavoriteLocal, setIsFavoriteLocal] = useState(false);
+
   function formatTimeToArabic(time) {
     if (!time) return "";
 
@@ -101,10 +109,10 @@ const ServicePage = () => {
         },
       }
     )
-    .then(res => {
-      setUserRating(res.data.rating); // صح 100%
-    })
-    .catch(() => setUserRating(null));
+      .then(res => {
+        setUserRating(res.data.rating); // صح 100%
+      })
+      .catch(() => setUserRating(null));
   }, [id]);
 
   useEffect(() => {
@@ -209,6 +217,9 @@ const ServicePage = () => {
 
 
   if (!service) return <div>الخدمة غير موجودة</div>;
+  const isFavorite = favorites.some(
+    (fav) => (fav.service?.id ?? fav.id) === service.id
+  );
 
   return (
     <div dir="rtl" className="px-10 font-['Montserrat-Arabic'] font-light text-[15px] flex flex-row min-h-screen">
@@ -221,7 +232,19 @@ const ServicePage = () => {
         <h1 className="text-2xl font-bold mt-12">{service.title}</h1>
         <p className="text-gray-600 text-wrap w-80 text-center">{service.description}</p>
         <div className='flex gap-6'>
-          <HeartIcon className='h-6 w-6 text-red-500' />
+          {/* ❤️ المفضلة (مثبتة صح) */}
+          <button
+            onClick={() => {
+              setIsFavoriteLocal((prev) => !prev); // 🔥 يثبت اللون فورًا
+              toggleFavorite(service);             // 🔁 تحديث السيرفر
+            }}
+          >
+            {isFavorite ? (
+              <HeartSolid className="h-6 w-6 text-red-500" />
+            ) : (
+              <HeartOutline className="h-6 w-6 text-gray-400" />
+            )}
+          </button>
           <div className='flex gap-2'>
             <StarIcon className='h-6 w-6 text-yellow-300' />
             <span className="text-base font-normal">
@@ -271,7 +294,6 @@ const ServicePage = () => {
           <h2 className="text-lg font-medium mb-3">معلومات التواصل</h2>
           <p className='pb-3 mb-2'>الهاتف: {service.phone}</p>
           <p className='border-t border-gray-300 py-2 mb-2'>الواتس: {service.whatsapp}</p>
-          <p className='border-t border-gray-300 py-2 mb-2'>الإيميل: {service.email}</p>
         </div>
 
         {/* الموقع */}
@@ -281,8 +303,8 @@ const ServicePage = () => {
             {address
               ? `${address.road || ""}، ${address.suburb || address.city || ""}`
               : (service.latitude && service.longitude
-                  ? `${service.latitude}, ${service.longitude}`
-                  : "لم يتم تحديد الموقع")}
+                ? `${service.latitude}, ${service.longitude}`
+                : "لم يتم تحديد الموقع")}
           </p>
 
           {service.latitude && service.longitude && (
@@ -316,12 +338,37 @@ const ServicePage = () => {
         {/* التعليقات */}
         <div className="mt-10">
           <h2 className="text-lg font-medium mb-3">التعليقات</h2>
-          {service.reviews?.map((review) => (
-            <div key={review.id} className="border-b py-4">
-              <p className="font-semibold">{review.user}</p>
-              <p className="text-sm text-gray-600">{review.comment}</p>
+
+          {comments.length === 0 && (
+            <p className="text-sm text-gray-500">لا توجد تقييمات بعد</p>
+          )}
+
+          {comments.map((c) => (
+            <div key={c.id} className="border-b py-4 flex gap-3">
+              <img
+                src={c.user_image || "/default-avatar.png"}
+                className="w-10 h-10 rounded-full"
+              />
+
+              <div className="flex-1">
+                <p className="font-semibold">{c.user_name}</p>
+                <p className="text-sm text-gray-600">{c.text}</p>
+
+                {c.images?.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {c.images.map(img => (
+                      <img
+                        key={img.id}
+                        src={img.image}
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
+
         </div>
       </div>
 
@@ -400,24 +447,24 @@ const ServicePage = () => {
             </div>
 
             {!userRating && (
-              <div>
+              <div className='flex flex-col items-center'>
                 <p className="font-extralight text-gray-700">
                   تقيمك للخدمة يساعدنا في تقديم الافضل
                 </p>
                 {/* ⭐ Rating */}
-                <div className="flex gap-1">
+                <div className="flex gap-1 ">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <StarIcon
                       key={star}
                       onClick={() => !userRating && setRating(star)}
-                      className={`h-6 w-6 cursor-pointer ${(userRating || rating) >= star
-                          ? "text-yellow-400"
-                          : "text-gray-300"
+                      className={`h-6 w-6 cursor-pointer mt-5 mx-1 ${(userRating || rating) >= star
+                        ? "text-yellow-400"
+                        : "text-gray-200"
                         }`}
                     />
                   ))}
                 </div>
-                <hr className="text-gray-300" />
+                <hr className="text-gray-300 w-full mt-5" />
               </div>
             )}
 

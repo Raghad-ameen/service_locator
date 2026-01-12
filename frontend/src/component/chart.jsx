@@ -18,13 +18,13 @@ ChartJS.register(
   Tooltip
 );
 
-function ChartCard({title, value, percent, data = [], labels, month, onMonthChange}) {
+function ChartCard({ title, value, data = [], labels, month, year, onMonthChange, onYearChange, y, m }) {
   const chartData = {
     labels: labels || [
-      "الأسبوع 1",
-      "الأسبوع 2",
+      "الأسبوع 4",
       "الأسبوع 3",
-      "الأسبوع 4"
+      "الأسبوع 2",
+      "الأسبوع 1"
     ],
     datasets: [
       {
@@ -52,12 +52,21 @@ function ChartCard({title, value, percent, data = [], labels, month, onMonthChan
       x: {
         display: true, // 👈 مهم: نُظهر الأسابيع
         grid: { display: false },
+
       },
       y: {
         display: false,
       },
     },
   };
+
+  const SITE_START_YEAR = 2025; // ← عدليها لسنة افتتاح موقعك
+  const currentYear = new Date().getFullYear();
+
+  const years = Array.from(
+    { length: currentYear - SITE_START_YEAR + 1 },
+    (_, i) => SITE_START_YEAR + i
+  );
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -66,15 +75,31 @@ function ChartCard({title, value, percent, data = [], labels, month, onMonthChan
         {value}
       </div>
       {/* Header */}
-      <div className="flex items-center text-sm mb-2">
+      <div className="flex items-center justify-start gap-5 text-sm mb-2">
         <h3 className="text-gray-600">{title}</h3>
+        <span className="text-gray-500">{y}</span>
+        {onYearChange && (
+          <select
+            value={year}
+            onChange={(e) => onYearChange(Number(e.target.value))}
+            className="text-primary mr-1 focus:outline-none"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        )}
         {/* Month selector */}
+        <span className="text-gray-500">{m}</span>
         {onMonthChange && (
           <select
             value={month}
             onChange={(e) => onMonthChange(Number(e.target.value))}
             className="text-primary mr-1 focus:outline-none"
           >
+            <span>aiv</span>
             <option value={1}>يناير</option>
             <option value={2}>فبراير</option>
             <option value={3}>مارس</option>
@@ -146,7 +171,7 @@ function StatCard({ title, value, type }) {
         </svg>
       ),
     },
-    products:{
+    products: {
       bar: "bg-green-300",
       iconBg: "bg-green-50",
       icon: (
@@ -157,7 +182,7 @@ function StatCard({ title, value, type }) {
         </svg>
       ),
     },
-    likes:{
+    likes: {
       bar: "bg-green-300",
       iconBg: "bg-green-50",
       icon: (
@@ -234,4 +259,4 @@ function SuggestionItem({ name, text, image }) {
     </div>
   );
 }
-export {ChartCard, StatCard, ProductItem, SuggestionItem}
+export { ChartCard, StatCard, ProductItem, SuggestionItem }

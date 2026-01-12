@@ -1,18 +1,19 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
-from .serializers import RegisterSerializer, LoginSerializer
-from .models import CustomUser, Suggestion
-from rest_framework.permissions import IsAdminUser
-from .serializers import UserListSerializer, SuggestionSerializer
+from .models import CustomUser, Suggestion, Review, CommentImage, Comment
 from services.models import Service
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly, IsAuthenticated
+from .serializers import UserListSerializer, SuggestionSerializer , CommentSerializer, ReviewSerializer, RegisterSerializer, LoginSerializer
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
-from django.shortcuts import render
+from django.db.models import Avg, Count
+
+
 
 #signup
 class RegisterView(generics.CreateAPIView):
@@ -58,6 +59,29 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserListSerializer
     permission_classes = [IsAdminUser]
 
+# create suggestion
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_suggestion(request):
+    message = request.data.get("message")
+    service_id = request.data.get("service_id")
+
+    if not message:
+        return Response({"message": "نص الاقتراح مطلوب"}, status=400)
+
+    try:
+        service = Service.objects.get(id=service_id)
+    except Service.DoesNotExist:
+        return Response({"service": "الخدمة غير موجودة"}, status=404)
+
+    Suggestion.objects.create(
+        user=request.user,
+        service=service,
+        message=message
+    )
+
+    return Response({"detail": "تم إرسال الاقتراح بنجاح"}, status=201)
+
 # عرض الاقتراحات الخاصة بالمزوّد
 class SuggestionListView(generics.ListAPIView):
     serializer_class = SuggestionSerializer
@@ -65,6 +89,8 @@ class SuggestionListView(generics.ListAPIView):
 
     def get_queryset(self):
         service = Service.objects.filter(owner=self.request.user).first()
+        if not service:
+            return Suggestion.objects.none()
         return Suggestion.objects.filter(service=service).order_by("-created_at")
 
 # المزوّد يرد على اقتراح
@@ -83,6 +109,80 @@ class SuggestionReplyView(APIView):
 
         return Response({"detail": "تم حفظ الرد بنجاح"})
 
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Review.objects.filter(service_id=self.request.query_params.get("service"))
+
+    def perform_create(self, serializer):
+        serializer.save(
+            user=self.request.user,
+            service_id=self.request.data.get("service")
+        )
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return Comment.objects.filter(
+            service_id=self.request.query_params.get("service")
+        ).prefetch_related("images").order_by("-created_at")
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        service_id = self.request.data.get("service")
+
+        if not service_id:
+            raise ValidationError("service is required")
+
+        service = Service.objects.get(id=service_id)
+
+        # تحقق فقط
+        review_exists = Review.objects.filter(
+            user=user,
+            service=service
+        ).exists()
+
+        if not review_exists:
+            raise ValidationError("يجب إضافة تقييم قبل التعليق")
+
+        serializer.save(
+            user=user,
+            service=service
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def my_rating(request):
+    service_id = request.query_params.get("service")
+    review = Review.objects.filter(
+        user=request.user,
+        service_id=service_id
+    ).first()
+
+    if review:
+        return Response({"rating": review.rating})
+
+    return Response({"rating": None})
+
+@api_view(["GET"])
+def service_rating_summary(request):
+    service_id = request.query_params.get("service")
+
+    data = Review.objects.filter(service_id=service_id).aggregate(
+        average=Avg("rating"),
+        count=Count("id")
+    )
+
+    return Response({
+        "average": round(data["average"] or 0, 1),
+        "count": data["count"]
+    })
 #current user
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

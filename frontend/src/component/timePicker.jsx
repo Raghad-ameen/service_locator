@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function TimePickerCustom({ value, onChange }) {
+export default function TimePickerCustom({ value, onChange, disabled, className }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -8,16 +8,17 @@ export default function TimePickerCustom({ value, onChange }) {
     String(i + 1).padStart(2, "0")
   );
   const minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
-  const periods = ["AM", "PM"];
+  const periods = ["م", "ص"];
 
   const [hour, setHour] = useState("12");
   const [minute, setMinute] = useState("00");
-  const [period, setPeriod] = useState("PM");
+  const [period, setPeriod] = useState("م");
+  const [isInitial, setIsInitial] = useState(true);
 
-  // 🔥 دالة التحويل إلى 24 ساعة
+  // دالة التحويل إلى 24 ساعة
   function convertTo24(hour, minute, period) {
     let h = parseInt(hour, 10);
-    if (period === "AM") {
+    if (period === "ص") {
       if (h === 12) h = 0;
     } else {
       if (h !== 12) h += 12;
@@ -35,8 +36,42 @@ export default function TimePickerCustom({ value, onChange }) {
     return () => document.removeEventListener("mousedown", clickOutside);
   }, []);
 
-  // 🔥 return وقت جاهز للباك
   useEffect(() => {
+    if (value === undefined || value === null) return;
+
+    if (!value || !value.includes(":")) {
+      setHour("12");
+      setMinute("00");
+      setPeriod("ص");
+      setIsInitial(false);
+      return;
+    }
+
+    const [h24, m] = value.split(":");
+    let h = parseInt(h24, 10);
+    let p = "ص";
+
+    if (isNaN(h)) {
+      h = 12;
+      p = "ص";
+    } else if (h === 0) {
+      h = 12;
+      p = "ص";
+    } else if (h === 12) {
+      p = "م";
+    } else if (h > 12) {
+      h = h - 12;
+      p = "م";
+    }
+
+    setHour(String(h).padStart(2, "0"));
+    setMinute(m);
+    setPeriod(p);
+    setIsInitial(false);
+  }, [value]);
+
+  useEffect(() => {
+    if (isInitial) return;
     if (onChange) onChange(convertTo24(hour, minute, period));
   }, [hour, minute, period]);
 
@@ -44,10 +79,14 @@ export default function TimePickerCustom({ value, onChange }) {
     <div ref={wrapperRef} className="relative w-[160px] font-['Montserrat-Arabic'] font-light text-[14px]">
       {/* INPUT */}
       <div
-        onClick={() => setOpen(!open)}
-        className={`border border-primary text-primary-700 px-3 py-2 rounded-md text-center w-full cursor-pointer bg-white transition-all duration-150 ${
-          open ? "border-primary shadow-sm scale-[1.02]" : ""
-        }`}
+        onClick={() => {
+          if (!disabled) setOpen(!open);
+        }}
+        className={`text-primary-700 px-3 py-2 rounded-md text-center w-full 
+          ${disabled ? "opacity-70" : "cursor-pointer"} 
+          bg-white transition-all duration-150 
+          ${open ? "border-primary shadow-sm scale-[1.02]" : ""}
+          ${className}`}
       >
         {hour}:{minute} {period}
       </div>

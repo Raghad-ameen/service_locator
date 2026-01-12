@@ -1,13 +1,13 @@
 from django.urls import path
-from .views import RegisterView, LoginView
-from .views import UserListView
-from .views import current_user
-from .views import delete_user
-from .views import search_users
+from .views import RegisterView, LoginView, UserListView, SuggestionListView, SuggestionReplyView, ReviewViewSet, CommentViewSet, current_user, delete_user, search_users, delete_own_account, update_user, create_suggestion, my_rating, service_rating_summary
+from rest_framework.routers import DefaultRouter
 # from .views import promote_admin
 # from .views import demote_admin
-from .views import update_user
-from .views import delete_own_account
+
+router = DefaultRouter()
+
+router.register("reviews", ReviewViewSet, basename="reviews")
+router.register("comments", CommentViewSet, basename="comments")
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -20,4 +20,11 @@ urlpatterns = [
     # path('<int:user_id>/promote_admin/', promote_admin, name='promote_admin'),
     # path('<int:user_id>/demote_admin/', demote_admin, name='demote_admin'),
     path('delete_own_account/', delete_own_account),
+    path('suggestions/', SuggestionListView.as_view(), name='suggestions'),
+    path("suggestions/<int:pk>/reply/", SuggestionReplyView.as_view(), name="suggestion-reply"),
+    path("suggestions/create/", create_suggestion),
+    path("my-rating/", my_rating),
+    path("service-rating/", service_rating_summary),
 ]
+
+urlpatterns += router.urls

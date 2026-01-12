@@ -1,9 +1,11 @@
-import React from 'react'
-import {CameraIcon} from '@heroicons/react/24/outline'
+import {CameraIcon ,ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { toast } from "react-toastify";
+import ConfirmToast from '../../component/ConfirmToast';
+
 
 const advertisement = () => {
   const [packages, setPackages] = useState([]);
@@ -12,6 +14,9 @@ const advertisement = () => {
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [packageId, setPackageId] = useState("");
+  const [ads, setAds] = useState([]);
+  const [errors, setErrors] = useState({});
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -23,20 +28,56 @@ const advertisement = () => {
       .catch((err) => console.error(err));
   }, []);
 
+  useEffect(() => {
+    axios
+      .get("http://127.0.0.1:8000/api/services/ads/approved/")
+      .then(res => setAds(res.data))
+      .catch(err => console.error("خطأ تحميل الإعلانات:", err));
+  }, []);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!image) {
+      newErrors.image = "صورة الإعلان مطلوبة";
+    }
+
+    if (!description.trim()) {
+      newErrors.description = "وصف الإعلان مطلوب";
+    } else if (description.length < 10) {
+      newErrors.description = "الوصف يجب أن يكون 10 أحرف على الأقل";
+    }
+
+    if (!startDate) {
+      newErrors.startDate = "تاريخ بدء الإعلان مطلوب";
+    }
+
+    if (!packageId) {
+      newErrors.package = "يرجى اختيار باقة إعلان";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const submitAd = async (e) => {
     e.preventDefault();
 
-    if (!image || !description || !startDate || !packageId) {
-      alert("يرجى تعبئة جميع الحقول");
-      return;
-    }
-    const today = new Date().toISOString().split("T")[0];
+    if (!validateForm()) return;
+
+    const toLocalYMD = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+    const formattedStartDate = toLocalYMD(startDate);
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("image", image);
     formData.append("description", description);
-    formData.append("start_date", today);
-   formData.append("package", packageId);
+    formData.append("start_date", formattedStartDate);
+    formData.append("package", packageId);
 
     await axios.post(
       "http://127.0.0.1:8000/api/services/provider/ads/",
@@ -49,7 +90,12 @@ const advertisement = () => {
       }
     );
 
-    alert("تم إرسال طلب الإعلان بنجاح");
+    toast.success("تم إرسال طلب الإعلان بنجاح");
+    setImage(null);
+    setDescription("");
+    setStartDate(null);
+    setPackageId("");
+    setSelectedPackage(null);
   };
 
   const calculateEndDate = () => {
@@ -75,25 +121,64 @@ const advertisement = () => {
     });
   };
 
+  const handleDeleteAds = async (id) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/services/provider/ads/${id}/`, {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+      });
+      setAds(ads.filter((ad) => ad.id !== id));
+    } catch (err) {
+      console.error('خطأ في حذف الاعلان:', err.response?.status, err.response?.data || err.message);
+    }
+  };
+
+  const showConfirmToast = ({message, onConfirm}) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-red-600" />}
+          title ="حذف إعلان"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
+  };
 
   return (
     <div className="flex-1 p-4 md:p-10 bg-primary-50/30 font-['Montserrat-Arabic'] font-light text-[15px]">
 
         {/* ======================= الإعلانات المنشورة ======================= */}
         <h2 className="text-xl font-normal text-gray-900 mb-5 text-right">الاعلانات المنشورة</h2>
-        <div className="bg-white rounded-xl p-6 mb-6">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="flex flex-col gap-5">
+        {ads.map((ad)=>(
+          <div key={ad.id} className="bg-white rounded-2xl p-6 mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="text-right">
               <p className="mb-2 font-normal">تم قبول الإعلان</p>
-              <p className="text-gray-700 mb-2 w-150">
-              بمناسبة المولد النبوي الشريف يسرّ حراز كوفي أن يقدم لكم خصم 20% على جميع الطلبات في جميع الفروع أيام 10-11–12 ربيع أول الموافق 2–3–4 سبتمبر 2025 العرض لمدة 3 أيام فقط ..
-              </p>
+              <p className="text-gray-700 mb-2 w-150">{ad.description}</p>
+              <p className="text-gray-500 text-xs mt-4 w-150">سيستمر الاعلان من <span className='text-primary mx-1'>{ad.start_date}</span> الى <span className='text-primary mx-1'>{ad.end_date}</span></p>
             </div>
 
-            <button className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-600 transition w-fit cursor-pointer">
+            <button onClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذا الإعلان؟", onConfirm: () => handleDeleteAds(ad.id),}) } className="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-600 transition w-fit cursor-pointer">
               حذف الإعلان
             </button>
           </div>
+        ))}
+          
         </div>
 
         {/* ====================== العنوان ====================== */}
@@ -110,6 +195,9 @@ const advertisement = () => {
               onChange={(e) => setImage(e.target.files[0])}
             />
           </div>
+          {errors.image && (
+            <p className="text-red-500 text-xs -mt-3">{errors.image}</p>
+          )}
           <div className='flex flex-col gap-2'>
             <label className="text-gray-600 font-light">اكتب وصفاً للإعلان</label>
             <textarea
@@ -118,9 +206,11 @@ const advertisement = () => {
               placeholder="اكتب هنا"
               className="w-full border border-gray-300 rounded-lg px-3 py-2"
             />
-            <p className="text-sm text-gray-500 mt-1">
-            </p>
+            {errors.description && (
+              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+            )}
           </div>
+
           <div className="flex flex-col md:flex-row gap-6">
 
             {/* تاريخ بدء الإعلان */}
@@ -130,18 +220,21 @@ const advertisement = () => {
                   selected={startDate}
                   onChange={(date) => setStartDate(date)}
                   minDate={new Date()}
-                  placeholderText="حدد تاريخ بد الإعلان"
+                  placeholderText="حدد تاريخ بدء الإعلان"
                   dateFormat="yyyy-MM-dd"
                   calendarStartDay={6}
                   className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none tabular-nums"
                   onChangeRaw={(e) => e.preventDefault()}
                 />
               </div>
+              {errors.startDate && (
+                <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>
+              )}
             </div>
 
             {/* باقة الإعلان */}
             <div className="w-full md:w-72">
-              <div className="relative">
+              <div className="relative border border-gray-300 rounded-xl px-5 py-2">
                 <select
                   value={packageId}
                   onChange={(e) => {
@@ -151,7 +244,7 @@ const advertisement = () => {
                     const pkg = packages.find(p => p.id === selectedId);
                     setSelectedPackage(pkg);
                   }}
-                  className="w-full border border-gray-300 rounded-xl px-10 py-2"
+                  className="w-full"
                 >
                   <option hidden>اختر باقة (مدة الإعلان و سعره)</option>
                   {packages.map((p) => (
@@ -161,6 +254,9 @@ const advertisement = () => {
                   ))}
                 </select>
               </div>
+              {errors.package && (
+                <p className="text-red-500 text-xs mt-1">{errors.package}</p>
+              )}
             </div>
             {startDate && selectedPackage && (
               <div className="text-gray-600 mt-4 text-sm">

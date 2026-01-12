@@ -18,9 +18,14 @@ ChartJS.register(
   Tooltip
 );
 
-function ChartCard({ title, value, percent, data }) {
+function ChartCard({title, value, percent, data = [], labels, month, onMonthChange}) {
   const chartData = {
-    labels: ["س", "ح", "ن", "ث", "ر", "خ", "ج"],
+    labels: labels || [
+      "الأسبوع 1",
+      "الأسبوع 2",
+      "الأسبوع 3",
+      "الأسبوع 4"
+    ],
     datasets: [
       {
         data,
@@ -32,46 +37,68 @@ function ChartCard({ title, value, percent, data }) {
       },
     ],
   };
-
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: { x: { display: false }, y: { display: false } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `عدد: ${ctx.parsed.y}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        display: true, // 👈 مهم: نُظهر الأسابيع
+        grid: { display: false },
+      },
+      y: {
+        display: false,
+      },
+    },
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 md:p-6 shadow-sm">
-
-      <div className="flex justify-between items-start mb-3">
-        <div className="text-right">
-          <p className="text-xl md:text-2xl font-bold text-gray-900">
-            {value}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            {title}
-          </p>
-        </div>
-
-        <span className="text-green-600 text-sm font-semibold">
-          {percent} ↑
-        </span>
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      {/* Value */}
+      <div className="text-2xl font-bold text-gray-800 mb-2">
+        {value}
       </div>
-
-      <div className="h-[120px] md:h-[140px]">
+      {/* Header */}
+      <div className="flex items-center text-sm mb-2">
+        <h3 className="text-gray-600">{title}</h3>
+        {/* Month selector */}
+        {onMonthChange && (
+          <select
+            value={month}
+            onChange={(e) => onMonthChange(Number(e.target.value))}
+            className="text-primary mr-1 focus:outline-none"
+          >
+            <option value={1}>يناير</option>
+            <option value={2}>فبراير</option>
+            <option value={3}>مارس</option>
+            <option value={4}>أبريل</option>
+            <option value={5}>مايو</option>
+            <option value={6}>يونيو</option>
+            <option value={7}>يوليو</option>
+            <option value={8}>أغسطس</option>
+            <option value={9}>سبتمبر</option>
+            <option value={10}>أكتوبر</option>
+            <option value={11}>نوفمبر</option>
+            <option value={12}>ديسمبر</option>
+          </select>
+        )}
+      </div>
+      {/* Chart */}
+      <div className="h-40">
         <Line data={chartData} options={options} />
       </div>
-
-      <div className="flex justify-between items-center text-xs text-gray-500 mt-4">
-        <span>آخر 7 أيام</span>
-        <span className="text-green-600 cursor-pointer font-medium">
-          عرض المزيد
-        </span>
-      </div>
-
     </div>
   );
 }
+
+
 
 /* ================= Components ================= */
 
@@ -97,7 +124,7 @@ function StatCard({ title, value, type }) {
         </svg>
       ),
     },
-    departments: {
+    Category: {
       bar: "bg-green-300",
       iconBg: "bg-green-50",
       icon: (
@@ -143,15 +170,15 @@ function StatCard({ title, value, type }) {
     },
   };
 
-  const c = config[type];
+  const c = config[type] || config.services;
 
   return (
-    <div className="relative bg-white rounded-2xl border border-[#E5F6EF] px-5 py-5 flex items-center justify-between shadow-sm">
+    <div className="relative bg-white rounded-2xl border border-[#E5F6EF] px-5 py-5 flex justify-between shadow-sm">
       <span className={`absolute right-2 top-5 bottom-5 w-[3px] rounded-full ${c.bar}`} />
 
       <div className="text-right">
-        <p className="text-[#374151] text-base md:text-lg mb-2">{title}</p>
-        <p className="text-3xl md:text-4xl font-semibold text-[#111827]">{value}</p>
+        <p className="text-gray-700 font-light text-base md:text-lg mb-2">{title}</p>
+        <p className="text-3xl md:text-4xl text-gray-900">{value}</p>
       </div>
 
       <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center ${c.iconBg}`}>

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { motion } from 'framer-motion';
 import { useNavigate } from "react-router-dom";
-const Login = ({onClose, onSwitch, setUser}) => {
+import { useAuth } from "../context/AuthContext";
+
+const Login = ({onClose, onSwitch}) => {
+  const { login } = useAuth ();
   const [formData, setFormData] = useState({
     identifier: "",
     password: ""
@@ -61,33 +64,24 @@ const Login = ({onClose, onSwitch, setUser}) => {
 
 
     if (res.status === 200) {
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("user_type", data.user_type);
-  localStorage.setItem("user_id", data.id); 
-  localStorage.setItem("has_service", data.has_service);
-  
-  setUser({
-    id: data.id,
-    username: data.username,
-    email: data.email,
-    phone: data.phone,
-    profile_image: data.profile_image,
-    user_type: data.user_type,
-    user_type_display: data.user_type === "admin" ? "مشرف" : (data.user_type === "owner" ? "صاحب خدمة" : "مستخدم عادي"),
-    has_service: data.has_service
-  });
-  localStorage.setItem("user", JSON.stringify({
-    id: data.id,
-    username: data.username,
-    email: data.email,
-    phone: data.phone,
-    profile_image: data.profile_image,
-    token: data.token,
-    user_type: data.user_type,
-    user_type_display: data.user_type === "admin" ? "مشرف" : (data.user_type === "owner" ? "صاحب خدمة" : "مستخدم عادي"),
-    has_service: data.has_service
-  }));
-
+      login(
+      {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        profile_image: data.profile_image,
+        user_type: data.user_type,
+        user_type_display:
+          data.user_type === "admin"
+            ? "مشرف"
+            : data.user_type === "owner"
+            ? "صاحب خدمة"
+            : "مستخدم عادي",
+        has_service: data.has_service,
+      },
+      data.token
+    );
   setFormData({
       identifier: "",
       password: ""

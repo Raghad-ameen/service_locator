@@ -1,32 +1,54 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { PlusIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { PencilIcon, TrashIcon } from "../../component/icons";
 
 const ProductsPage = () => {
-  const location = useLocation();
-  const serviceId = location.state?.service_id;
 
+  const [service, setService] = useState(null);
   const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [previewImages, setPreviewImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [deletedImageIds, setDeletedImageIds] = useState([]);
+  const [newImages, setNewImages] = useState([]);
 
   const [editingProduct, setEditingProduct] = useState(null);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [price, setPrice] = useState("");
-  const [photos, setPhotos] = useState([]);
 
   const [errorMessage, setErrorMessage] = useState("");
 
   // ================== جلب المنتجات ==================
   useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+
+    const fetchService = async () => {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/services/products/?service=${serviceId}`,
+          "http://127.0.0.1:8000/api/services/service/my_service/",
+          {
+            headers: { Authorization: `Token ${token}` },
+          }
+        );
+        setService(res.data);
+      } catch (err) {
+        console.error("خطأ في جلب الخدمة:", err);
+      }
+    };
+
+    if (token) fetchService();
+  }, []);
+
+  useEffect(() => {
+    if (!service?.id) return;
+
+    const token = localStorage.getItem("token");
+
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          `http://127.0.0.1:8000/api/services/products/?service=${service.id}`,
           { headers: { Authorization: `Token ${token}` } }
         );
         setProducts(res.data);
@@ -35,8 +57,8 @@ const ProductsPage = () => {
       }
     };
 
-    fetchData();
-  }, [serviceId]);
+    fetchProducts();
+  }, [service]);
 
   // ================== فتح مودال إضافة ==================
   const openAddModal = () => {
@@ -44,20 +66,23 @@ const ProductsPage = () => {
     setName("");
     setDesc("");
     setPrice("");
-    setPhotos([]);
+    setNewImages([]); 
     setShowModal(true);
   };
 
   // ================== فتح مودال تعديل ==================
-  const openEditModal = async (prod) => {
+  const openEditModal = (prod) => {
     setEditingProduct(prod);
     setName(prod.name);
     setDesc(prod.description);
     setPrice(prod.price);
-    setPhotos([]);
+
+    setExistingImages(prod.images); // صور الباك
+    setDeletedImageIds([]);          // لا شيء محذوف
+    setNewImages([]);                // لا صور جديدة
+
     setShowModal(true);
   };
-
   // ================== حفظ المنتج ==================
   const handleSaveProduct = async (e) => {
     e.preventDefault();
@@ -70,62 +95,53 @@ const ProductsPage = () => {
     const token = localStorage.getItem("token");
     const formData = new FormData();
 
-    formData.append("service", serviceId);
     formData.append("name", name);
     formData.append("description", desc);
     formData.append("price", price);
 
-    photos.forEach((p) => formData.append("photos", p));
+    newImages.forEach((file) => {
+      formData.append("photos", file);
+    });
 
     try {
+      // ✏️ تعديل
       if (editingProduct) {
-        await axios.put(
+        deletedImageIds.forEach((id) => {
+          formData.append("deleted_images", id);
+        });
+
+        await axios.patch(
           `http://127.0.0.1:8000/api/services/products/${editingProduct.id}/`,
           formData,
-          { headers: { Authorization: `Token ${token}`, "Content-Type": "multipart/form-data" } }
+          {
+            headers: {
+              Authorization: `Token ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
-      } else {
+      } 
+      // ➕ إضافة
+      else {
         await axios.post(
           "http://127.0.0.1:8000/api/services/products/",
           formData,
-          { headers: { Authorization: `Token ${token}`, "Content-Type": "multipart/form-data" } }
+          {
+            headers: {
+              Authorization: `Token ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
       }
 
+      closeModal();
       window.location.reload();
     } catch (err) {
-      console.error("خطأ في الحفظ:", err);
+      console.error("خطأ في الحفظ:", err.response?.data || err);
     }
   };
 
-  // ================== حذف صورة ==================
-  const deleteImage = async (imageId) => {
-    const token = localStorage.getItem("token");
-
-    try {
-      await axios.delete(
-        `http://127.0.0.1:8000/api/services/delete-image/${imageId}/`,
-        { headers: { Authorization: `Token ${token}` } }
-      );
-
-      // تحديث صور المودال
-      setEditingProduct((prev) => ({
-        ...prev,
-        images: prev.images.filter((img) => img.id !== imageId),
-      }));
-
-      // تحديث صور الجدول الرئيسي
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingProduct.id
-            ? { ...p, images: p.images.filter((img) => img.id !== imageId) }
-            : p
-        )
-      );
-    } catch (err) {
-      console.error("خطأ في حذف الصورة:", err);
-    }
-  };
 
   // ================== حذف المنتج ==================
   const deleteProduct = async (id) => {
@@ -139,11 +155,17 @@ const ProductsPage = () => {
     setProducts(products.filter((p) => p.id !== id));
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setNewImages([]);
+    setDeletedImageIds([]);
+  };
+
   return (
-    <div>
+    <div className="">
       {/* ---------------------- الهيدر ---------------------- */}
-      <div className="flex justify-between px-4">
-        <h1 className="m-4 text-lg text-primary-600 font-normal">إدارة المنتجات</h1>
+      <div className="flex justify-between items-center px-4 my-8 mx-5">
+        <h1 className="text-lg text-primary-600 font-normal">إدارة المنتجات</h1>
         <button onClick={openAddModal} className="flex h-fit items-center gap-2 cursor-pointer text-primary-600 bg-gradient-to-l from-primary/10 to-primary/50 px-4 py-2.5 rounded-full">
           <PlusIcon className="w-5" />
           منتج جديد
@@ -175,7 +197,7 @@ const ProductsPage = () => {
                   <td className="p-2 flex-1">
                     <img
                       src={prod.images[0]?.photo}
-                      onClick={() => {setPreviewImages(prod.images);setShowModal("preview");}}
+                      onClick={() => {setExistingImages(prod.images);setShowModal("preview");}}
                       className="w-14 h-14 rounded cursor-pointer object-cover mx-auto"
                     />
                   </td>
@@ -212,7 +234,7 @@ const ProductsPage = () => {
       {showModal === true && (
         <div
           className="fixed inset-0 bg-black/20 flex justify-center items-center z-50"
-          onClick={(e) => e.target === e.currentTarget && setShowModal(false)}
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
           <div className="bg-white rounded-lg p-6 shadow-lg w-[50%]">
             <div className="flex justify-between">
@@ -222,19 +244,49 @@ const ProductsPage = () => {
 
               <XMarkIcon
                 className="w-7 h-7 text-gray-500 cursor-pointer"
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
               />
             </div>
 
             {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
 
             {/* صور المنتج الحالية عند التعديل */}
-            {editingProduct && editingProduct.images?.length > 0 && (
-              <div className="grid grid-cols-8 w-fit gap-4 my-4">
-                {editingProduct.images.map((img) => (
+            {existingImages.length > 0 && (
+              <div className="grid grid-cols-8 gap-4 my-4">
+                {existingImages.map((img) => (
                   <div key={img.id} className="relative">
-                    <img src={img.photo} className="w-20 h-20 rounded object-cover" />
-                      <XMarkIcon className="absolute top-1 left-1 w-5 h-5 text-white cursor-pointer bg-red-500 rounded-full p-1" onClick={() => deleteImage(img.id)}/>
+                    <img
+                      src={img.photo}
+                      className="w-20 h-20 rounded object-cover"
+                    />
+                    <XMarkIcon
+                      className="absolute top-1 left-1 w-5 h-5 bg-red-500 text-white rounded-full p-1 cursor-pointer"
+                      onClick={() => {
+                        setDeletedImageIds((prev) => [...prev, img.id]);
+                        setExistingImages((prev) =>
+                          prev.filter((i) => i.id !== img.id)
+                        );
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* الصورة المختارة الجديدة */}
+            {newImages.length > 0 && (
+              <div className="grid grid-cols-8 gap-4 my-4">
+                {newImages.map((file, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      className="w-20 h-20 rounded object-cover"
+                    />
+                    <XMarkIcon
+                      className="absolute top-1 left-1 w-5 h-5 bg-red-500 text-white rounded-full p-1 cursor-pointer"
+                      onClick={() =>
+                        setNewImages((prev) => prev.filter((_, i) => i !== index))
+                      }
+                    />
                   </div>
                 ))}
               </div>
@@ -256,7 +308,10 @@ const ProductsPage = () => {
                   multiple
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => setPhotos([...e.target.files])}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setNewImages((prev) => [...prev, ...files]);
+                  }}
                 />
               </div>
 
@@ -315,8 +370,8 @@ const ProductsPage = () => {
               />
             </div>
 
-            <div className={`grid gap-4 w-fit grid-cols-${Math.min(previewImages.length, 4)}`}>
-              {previewImages.map((img) => (
+            <div className={`grid gap-4 w-fit grid-cols-${Math.min(existingImages.length, 4)}`}>
+              {existingImages.map((img) => (
                 <img
                   key={img.id}
                   src={img.photo}

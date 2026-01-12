@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import {PencilIcon} from "../../component/icons"
+import {PencilIcon, TrashIcon} from "../../component/icons"
 import {PlusCircleIcon} from "@heroicons/react/24/outline";
 import AddWH from "../../component/addWH";
+import TimePickerCustom from "../../component/timePicker";
 const manageService = () => {
   const [service, setService] = useState(null);
   const [activeField, setActiveField] = useState(null);
+  const [activeRowId, setActiveRowId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const titleRef = useRef(null);
@@ -28,7 +29,7 @@ const manageService = () => {
     descriptionRef.current.focus();
   }
   if (activeField === 'category' && categoryRef.current) {
-    descriptionRef.current.focus();
+    categoryRef.current.focus();
   }
   if (activeField === 'email' && emailRef.current) {
     emailRef.current.focus();
@@ -186,6 +187,35 @@ const manageService = () => {
     setHasChanges(true);
   };
 
+  const handleDeleteWorkSchedule = async (id) => {
+  if (!window.confirm("هل تريد حذف هذا اليوم؟")) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    // لو السجل محفوظ بالباك
+    if (id) {
+      await fetch(
+        `http://127.0.0.1:8000/api/services/work-schedules/${id}/`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+        }
+      );
+    }
+
+    // حدّث الواجهة مباشرة
+    setService((prev) => ({
+      ...prev,
+      work_schedules: prev.work_schedules.filter((wh) => wh.id !== id),
+    }));
+  } catch (err) {
+    console.error("خطأ في حذف الدوام", err);
+  }
+  };
+
   if (!service) return <p>لا توجد خدمة</p>;
 
   const infoRows = [
@@ -265,21 +295,8 @@ const manageService = () => {
     { key: "whatsapp", label: "رقم الواتس", type: "text" },
   ];
 
-  const formatTimeArabic = (time) => {
-    if (!time) return "";
-
-    let [hour, minute] = time.split(":");
-    hour = parseInt(hour, 10);
-
-    const suffix = hour >= 12 ? "م" : "ص";
-    hour = hour % 12 || 12;
-
-    return `${hour}:${minute} ${suffix}`;
-  };
-
-
   return (
-    <div className="mt-10 font-['Montserrat-Arabic'] text-[14px] font-light">
+    <div className="my-10 font-['Montserrat-Arabic'] text-[14px] font-light">
       <form onSubmit={(e) => {e.preventDefault(); handleSave();}} className="w-full px-15 flex flex-col items-center gap-10">
       {/* /////////////////////////images//////////////////////////// */}
         <div className="w-full flex flex-col items-center">
@@ -390,12 +407,12 @@ const manageService = () => {
 
         <div className="w-full">
           <h2 className="font-normal text-lg">معلومات الدوام</h2>
-          <table className="mt-5 w-full border border-gray-200 rounded-xl overflow-hidden">
-            <thead className="bg-gray-50">
+          <table className="mt-5 w-full shadow-md rounded-2xl overflow-hidden">
+            <thead className="bg-gray-50 border-b border-gray-300">
               <tr className="">
-                <th className="flex-1 font-medium p-3 w-1/4">اليوم</th> 
-                <th className="flex-1 font-medium p-3">ساعات الدوام</th> 
-                <th className="p-3 w-24">
+                <th className="font-medium p-3 w-1/4 text-right border-l border-gray-300">اليوم</th> 
+                <th className="font-medium text-right pr-12">ساعات الدوام</th> 
+                <th className="p-3">
                   <PlusCircleIcon
                     className="h-6 w-6 text-gray-600 cursor-pointer"
                     onClick={() => setShowAddWH(true)}
@@ -404,17 +421,20 @@ const manageService = () => {
               </tr>
             </thead>
             <tbody>
-              {service.work_schedules?.map((wh) => (
-                <tr key={wh.id}>
-                  <td>
+              {service.work_schedules?.map((wh, index) => (
+                <tr key={wh.id ?? `new-${index}`}>
+                  <td className="font-medium p-3 w-1/4 border-l border-b border-gray-300">
                     <select
                       value={wh.day}
+                      disabled={activeRowId !== wh.id}
                       onChange={(e) =>
                         handleWorkScheduleChange(wh.id, "day", e.target.value)
                       }
                       className={`focus:outline-none ${
-                      activeField === "category" ? "text-gray-900 appearance-auto cursor-pointer" : "text-gray-700 appearance-none pointer-events-none"
-                    }`}
+                        activeRowId === wh.id
+                          ? "text-gray-900 appearance-auto cursor-pointer"
+                          : "text-gray-700 appearance-none pointer-events-none"
+                      }`}
                     >
                       <option value="السبت">السبت</option>
                       <option value="الأحد">الأحد</option>
@@ -425,22 +445,37 @@ const manageService = () => {
                       <option value="الجمعة">الجمعة</option>
                     </select>
                   </td>
-                  <td>
-                    <input
-                      type="time"
-                      value={wh.start_time}
-                      onChange={(e) =>
-                        handleWorkScheduleChange(wh.id, "start_time", e.target.value)
-                      }
-                    />
-                    -
-                    <input
-                      type="time"
-                      value={wh.end_time}
-                      onChange={(e) =>
-                        handleWorkScheduleChange(wh.id, "end_time", e.target.value)
-                      }
-                    />
+                  <td className="py-3 text-right border border-gray-300 border-l-0">
+                    <div className="flex items-center">
+                      <TimePickerCustom
+                        disabled={activeRowId !== wh.id}
+                        value={wh.start_time?.slice(0, 5) || ""}
+                        onChange={(value) =>
+                          handleWorkScheduleChange(wh.id, "start_time", value)
+                        }
+                        className=""
+                      />
+                      <span className="mx-1">-</span>
+                      <TimePickerCustom
+                        disabled={activeRowId !== wh.id}
+                        value={wh.end_time?.slice(0, 5) || ""}
+                        onChange={(value) =>
+                          handleWorkScheduleChange(wh.id, "end_time", value)
+                        }
+                        className=""
+                      />
+                    </div>
+                  </td>
+                  <td className="border-b border-gray-300">
+                    <div className="flex gap-4">
+                      <PencilIcon
+                        OnClick={() => setActiveRowId(wh.id)}
+                        className="cursor-pointer"
+                      />
+                      <TrashIcon 
+                      OnClick={() => handleDeleteWorkSchedule(wh.id)}
+                      className=""/>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -448,27 +483,26 @@ const manageService = () => {
             </tbody>
           </table>
         </div>
-          {showAddWH && (
-            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl p-6 w-[600px]">
-                <h3 className="text-lg mb-4">إضافة دوام جديد</h3>
 
+          {showAddWH && (
+            <div onClick={() => setShowAddWH(false)} className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+              <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl p-6 w-[600px]">
+                <h3 className="text-lg mb-4">إضافة دوام جديد</h3>
                 <AddWH
                   ref={addWHRef}
                   value={newWorkHours}
                   onChange={setNewWorkHours}
                 />
-
                 <div className="flex justify-end gap-3 mt-6">
                   <button
-                    className="px-4 py-2 border rounded"
+                    className="px-4 py-2 border border-gray-500 text-gray-700 rounded-lg cursor-pointer"
                     onClick={() => setShowAddWH(false)}
                   >
                     إلغاء
                   </button>
 
                   <button
-                    className="px-4 py-2 bg-primary text-white rounded"
+                    className="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer"
                     onClick={() => {
                       if (!addWHRef.current.validate()) return;
 

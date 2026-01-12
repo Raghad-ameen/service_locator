@@ -36,7 +36,7 @@ class ServiceSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             'id', 'owner', 'owner_image', 'title', 'description', 'category', 'category_id',
-            'cover_image', 'logo_image','email', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at','latitude','longitude',
+            'cover_image', 'logo_image','email', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at','latitude','longitude'
         ]
     
     def get_products(self, obj):
@@ -50,16 +50,13 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ['id', 'photo']
 
-
 # ============ Product Display ============
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
-
     class Meta:
         model = Product
         fields = ['id', 'service', 'name', 'description', 'price', 'images']
         read_only_fields = ['service']  # مهم — service لا يتغير على التعديل
-
 
 # ============ Product Create / Update ============
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
@@ -69,36 +66,69 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    deleted_images = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
+
     class Meta:
         model = Product
-        fields = ['service', 'name', 'description', 'price', 'photos']
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "photos",
+            "deleted_images",
+        ]
 
+    # =========================
+    # CREATE
+    # =========================
     def create(self, validated_data):
         photos = validated_data.pop("photos", [])
+        deleted_images = validated_data.pop("deleted_images", [])
+
         product = Product.objects.create(**validated_data)
 
-        # إضافة الصور
+        # حفظ الصور الجديدة
         for photo in photos:
-            ProductImage.objects.create(product=product, photo=photo)
+            ProductImage.objects.create(
+                product=product,
+                photo=photo
+            )
 
         return product
 
+    # =========================
+    # UPDATE
+    # =========================
     def update(self, instance, validated_data):
-        photos = validated_data.pop("photos", None)
+        photos = validated_data.pop("photos", [])
+        deleted_images = validated_data.pop("deleted_images", [])
 
-        # تحديث بيانات المنتج
-        instance.name = validated_data.get("name", instance.name)
-        instance.description = validated_data.get("description", instance.description)
-        instance.price = validated_data.get("price", instance.price)
+        # تحديث الحقول الأساسية
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
         instance.save()
 
-        # إذا المستخدم أرسل صور جديدة → نضيفها فقط
-        if photos is not None:
-            for photo in photos:
-                ProductImage.objects.create(product=instance, photo=photo)
+        # حذف الصور المطلوبة
+        if deleted_images:
+            ProductImage.objects.filter(
+                id__in=deleted_images,
+                product=instance
+            ).delete()
+
+        # إضافة صور جديدة
+        for photo in photos:
+            ProductImage.objects.create(
+                product=instance,
+                photo=photo
+            )
 
         return instance
-    
 class AdPackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdPackage
@@ -169,9 +199,9 @@ class AdListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Ad
-        fields = ['id','description', 'image', 'start_date', 'end_date', 'status', 'delete_allowed', 'package', 'service', 'owner_name', 'service_title']
+        fields = ['id','description', 'image', 'start_date', 'end_date', 'status', 'package', 'service', 'owner_name', 'service_title']
 
 class AdminAdUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
-        fields = ['status', 'delete_allowed']
+        fields = ['status']

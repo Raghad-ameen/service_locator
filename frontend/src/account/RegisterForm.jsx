@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { motion } from 'framer-motion';
 import { useNavigate } from "react-router-dom";
-const RegisterForm = ({onClose, onSwitch, setUser}) => {
+import { CameraIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "../context/AuthContext";
+const RegisterForm = ({ onClose, onSwitch }) => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -103,23 +106,24 @@ const RegisterForm = ({onClose, onSwitch, setUser}) => {
       }
 
       if (res.status === 201 && data) {
-        // ✅ حفظ بيانات المستخدم محليًا
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data));
-        localStorage.setItem("user_type", data.user_type);
-        localStorage.setItem("has_service", data.has_service);
-
-        // ✅ تحديث حالة المستخدم في التطبيق
-        setUser({
-          id: data.id,
-          username: data.username,
-          email: data.email,
-          phone: data.phone,
-          profile_image: data.profile_image,
-          user_type: data.user_type,
-          user_type_display: data.user_type === "admin" ? "مشرف" : (data.user_type === "owner" ? "صاحب خدمة" : "مستخدم عادي"),
-          has_service: data.has_service
-        });
+        login(
+          {
+            id: data.id,
+            username: data.username,
+            email: data.email,
+            phone: data.phone,
+            profile_image: data.profile_image,
+            user_type: data.user_type,
+            user_type_display:
+              data.user_type === "admin"
+                ? "مشرف"
+                : data.user_type === "owner"
+                ? "صاحب خدمة"
+                : "مستخدم عادي",
+            has_service: data.has_service,
+          },
+          data.token
+        );
         setFormData({
           username: "",
           email: "",
@@ -282,13 +286,18 @@ const RegisterForm = ({onClose, onSwitch, setUser}) => {
           </div>
 
           {/* image */}
-          <div>
+          <div className="mt-5">
+            <div onClick={() => document.getElementById('accountImage').click()} className="flex items-center">
+              <CameraIcon className='w-6 h-6 ml-2 text-gray-400'/>
+              <label className="cursor-pointer text-gray-400">اضف صورة</label>
+            </div>
             <input
+              id="accountImage"
               type="file"
               name="profile_image"
               accept="image/*"
               onChange={handleChange}
-              className="w-full border border-gray-400 bg-gray-50 px-5 py-3.5 rounded-xl"
+              className="hidden w-full border border-gray-400 bg-gray-50 px-5 py-3.5 rounded-xl"
             />
             {errors.profile_image && (
               <p className="text-red-500 text-xs mt-1">{errors.profile_image}</p>

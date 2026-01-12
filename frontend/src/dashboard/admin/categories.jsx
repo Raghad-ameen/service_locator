@@ -3,6 +3,9 @@ import { useLocation } from "react-router-dom";
 import { PlusIcon, PlusCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import {PencilIcon, TrashIcon} from '../../component/icons'
 import axios from 'axios';
+import { toast } from "react-toastify";
+import ConfirmToast from "../../component/ConfirmToast";
+
 
 const Categories = () => {
   const location = useLocation();
@@ -16,17 +19,6 @@ const Categories = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const MAX_LENGTH = 150;
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    axios.get('http://127.0.0.1:8000/api/services/categories/', {
-      headers: {
-        Authorization: `Token ${token}`
-      }
-    })
-    .then(res => setCategories(res.data))
-    .catch(err => console.error('خطأ في تحميل الأقسام:', err));
-  }, []);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -128,7 +120,7 @@ const Categories = () => {
             },
           }
         );
-        setCategories([...categories, res.data]);
+        setCategories((prev) => [...prev, res.data]);
       }
 
       handleCloseModal();
@@ -172,6 +164,30 @@ const Categories = () => {
     }
   };
 
+  const showConfirmToast = ({ message, onConfirm }) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<TrashIcon/>}
+          title="حذف قسم"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
+  };
+
 
   return (
     <div className='flex flex-col text-secondary-900 p-6 font-["Montserrat-Arabic"] text-[14px]'>
@@ -192,7 +208,7 @@ const Categories = () => {
               <h3 className='h-6'>{cat.name}</h3>
               <p className='w-fit h-20 text-center text-gray-500 font-light wrap-anywhere'>{cat.description}</p>
               <div className='flex self-end gap-2 items-center h-10'>
-                <TrashIcon OnClick={() => handleDeleteCategory(cat.id)} className='cursor-pointer' />
+                <TrashIcon OnClick={() =>showConfirmToast({message: `هل أنت متأكد من حذف قسم "${cat.name}"؟`, onConfirm: () => handleDeleteCategory(cat.id),})} className='cursor-pointer' />
                 <PencilIcon 
                   OnClick={() => { 
                     setEditingCategory(cat);
@@ -200,6 +216,7 @@ const Categories = () => {
                     setNewCategoryDescription(cat.description);
                     setNewCategoryIcon(null);
                     setShowCategoryModal(true);
+                    setErrorMessage("");
                   }} 
                   className='cursor-pointer' />
               </div>

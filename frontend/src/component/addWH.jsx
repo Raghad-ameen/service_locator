@@ -111,7 +111,7 @@ const AddWH = forwardRef(({ value, onChange }, ref) => {
                 setSelectedDays(newDays);
                 updateParent({ days: newDays });
               }}
-              className={`px-3 py-2 rounded-lg border text-center
+              className={`px-3 py-2 rounded-lg border text-center cursor-pointer
                 ${
                   selectedDays.includes(day)
                     ? "border-primary bg-primary/10 text-primary"
@@ -166,6 +166,7 @@ const AddWH = forwardRef(({ value, onChange }, ref) => {
                   setUnified(newUnified);
                   updateParent({ unified: newUnified });
                 }}
+                className="border border-primary"
               />
             </div>
 
@@ -178,6 +179,7 @@ const AddWH = forwardRef(({ value, onChange }, ref) => {
                   setUnified(newUnified);
                   updateParent({ unified: newUnified });
                 }}
+                className="border border-primary"
               />
             </div>
           </div>

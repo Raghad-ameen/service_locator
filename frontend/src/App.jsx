@@ -5,6 +5,10 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import './App.css';
 //pages
 import MyMap from "./component/MyMap";
+import { useAuth } from './context/AuthContext';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+//pages
 import ScrollToTop from './component/scrollTop';
 import RegisterForm from "./account/RegisterForm";
 import Login from "./account/LoginForm";
@@ -24,20 +28,15 @@ import Complain from './dashboard/owner/complain';
 import Product from './dashboard/owner/product';
 //admin pages
 import AdminNav from './dashboard/admin/AdminNav';
-import AdminDashboard from './dashboard/admin/AdminDashboard';
+import AdminDashboard from './dashboard/admin/adminDashboard';
 import UserList from './dashboard/admin/users_list';
 import ServicesList from './dashboard/admin/services_list';
 import Categories from './dashboard/admin/categories';
 import ManageAdv from './dashboard/admin/manageAdv';
-
 import "leaflet/dist/leaflet.css";
-
 function App() {
-    const [user, setUser] = useState(() => {
-      const savedUser = localStorage.getItem("user");
-      return savedUser ? JSON.parse(savedUser) : null;
-  });
   const [activeModal, setActiveModal] = useState(null);
+  const { user } = useAuth();
   
 
   return (
@@ -46,7 +45,7 @@ function App() {
         <ScrollToTop />
         <Routes>
           {/* Shared layout for all public pages */}
-          <Route element={<Layout user={user} setUser={setUser} activeModal={activeModal} setActiveModal={setActiveModal} />}>
+          <Route element={<Layout activeModal={activeModal} setActiveModal={setActiveModal} />}>
             <Route path='/' element={<Home />} />
             <Route path='signup' element={<RegisterForm />} />
             <Route path='login' element={<Login />} />
@@ -57,7 +56,7 @@ function App() {
             <Route path="Userprofile" element={<Profile/>}/>
           </Route>
           {/* Admin section with its own layout */}
-          <Route element={user?.user_type === "admin" ? <AdminNav user={user} setUser={setUser} />: <Navigate to="/" replace />}>
+          <Route element={user?.user_type === "admin" ? <AdminNav/>: <Navigate to="/" replace />}>
             <Route path='adminDashboard' element={<AdminDashboard/>}/>
             <Route path='userlist' element={<UserList />} />
             <Route path='serviceslist' element={<ServicesList />} />
@@ -66,7 +65,7 @@ function App() {
             <Route path="Adminprofile" element={<Profile/>}/>
           </Route>
           {/* owner section with its own layout */}
-          <Route element={user?.user_type === "owner" || user?.has_service ? <OwnerNav user={user} setUser={setUser} />: <Navigate to="/" replace />}>
+          <Route element={user?.user_type === "owner" || user?.has_service ? <OwnerNav/>: <Navigate to="/" replace />}>
             <Route path='serviceDashboard' element={<ServiceDashboard />} />
             <Route path="manageService" element={<ManageService/>}/>
             <Route path="advertisement" element={<Advertisement/>}/>
@@ -76,6 +75,17 @@ function App() {
           </Route>
         </Routes>
       </Router>
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </LocalizationProvider>
   );
 }

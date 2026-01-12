@@ -15,7 +15,7 @@ const ProductList = () => {
 
     useEffect(() => {
         axios
-        .get(`http://127.0.0.1:8000/api/services/products/?service=${serviceId}`)
+        .get(`http://127.0.0.1:8000/api/services/public/products/?service=${serviceId}`)
         .then(res => setProducts(res.data))
         .catch(err => console.log("خطأ في تحميل المنتجات:", err));
     }, [serviceId]);

@@ -4,14 +4,19 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon , UserGroupIcon, Square3Stack3DIcon, ShoppingBagIcon, MegaphoneIcon, UserCircleIcon, ArrowRightStartOnRectangleIcon, HeartIcon, BellIcon, Squares2X2Icon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import logo from "../../../public/logo.png";
 import Search from '../../component/search';
+import default_img from "../../../public/media/user_profile/default.png"
+import NotificationsDropdown from '../../component/NotificationsDropdown';
+import { useAuth } from "../../context/AuthContext";
 
-const OwnerNav = ({user, setUser}) => {
+const OwnerNav = () => {
+  const { user, logout, token } = useAuth();
   const navigate = useNavigate();
   const [service, setService] = useState(null);
   const location = useLocation();
   const currentPath = location.pathname;
-  const token = localStorage.getItem("token");
   const [pendingCount, setPendingCount] = useState(0);
+  const showSearchOff = ["/product"];
+
 
   // console.log("بيانات المستخدم:", user);
   // console.log("الهيدر المرسل:", { Authorization: `Token ${token}` });
@@ -23,32 +28,29 @@ const OwnerNav = ({user, setUser}) => {
     { to: "/complain", label: " الإقتراحات و الشكاوي", icon: ShoppingBagIcon },
     { to: "/advertisement", label: "إدارة الإعلانات", icon: MegaphoneIcon },
   ];
+
   //بيانات الخدمة
   useEffect(() => {
-  if (token) {
-    fetch("http://127.0.0.1:8000/api/services/service/", {
-      headers: { Authorization: `Token ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setService(data[0]);        // ← أهم شيء
-        const count = data.filter(s => s.status === "pending").length;
-        setPendingCount(count);
+    if (token) {
+      fetch("http://127.0.0.1:8000/api/services/service/", {
+        headers: { Authorization: `Token ${token}` }
       })
-      .catch(err => console.error("خطأ في جلب الخدمات:", err));
-  }
-}, []);
-
+        .then(res => res.json())
+        .then(data => {
+          setService(data[0]);
+          const count = data.filter(s => s.status === "pending").length;
+          setPendingCount(count);
+        })
+        .catch(err => console.error("خطأ في جلب الخدمات:", err));
+    }
+  }, []);
 
   //logout
   const handleLogout = () => {
-    localStorage.removeItem("user");   // امسح بيانات المستخدم
-    localStorage.removeItem("token");  // امسح التوكن
-    setUser(null);  
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);  // ← توجيه لصفحة الدخول
+    logout();
+    navigate("/");
   };
+
 
   return (
     <div dir='rtl' className="flex font-['Montserrat-Arabic'] text-sm text-secondary-900">   
@@ -95,14 +97,14 @@ const OwnerNav = ({user, setUser}) => {
             </div>
           </div>
         </div>
-        <div className='flex-1 mr-60 w-fit overflow-hidden items-center '>
-          <div dir="rtl" className="fixed z-20 flex w-full items-center gap-20 bg-white px-20 py-4 border-b border-primary/30 ">
+        <div className='flex-1 mr-60 w-full overflow-hidden items-center '>
+          <div dir="rtl" className="fixed z-20 flex w-[85%] items-center gap-20 justify-between bg-white px-20 py-4 border-b border-primary/30 ">
             {/* nav item */}
             <div dir="rtl" className="flex gap-6 w-fit">
               <h1>مرحبا بك . <span>{user?.username}</span></h1>
             </div>
             {/* search */}
-            <Search />
+            {showSearchOff.includes(currentPath) && <Search />}
             {/* button icon and user info */}
             <div dir="ltr" className="flex w-fit justify-end items-center">
               {user?.user_type !== "owner" && !user?.has_service && (
@@ -120,7 +122,7 @@ const OwnerNav = ({user, setUser}) => {
               <div dir="rtl" className="flex items-center gap-6">
                 <div className="flex gap-4 w-fit border-l border-gray-300 pl-5 py-1">
                   <HeartIcon className="w-5 h-5"/>
-                  <BellIcon className="w-5 h-5"/>
+                  <NotificationsDropdown/>
                   {user?.user_type === "admin" && (
                     <Squares2X2Icon  onClick={() => navigate('/adminDashboard')} className={`h-5 w-5 cursor-pointer ${currentPath === '/adminDashboard' ? 'text-primary' : 'text-gray-900'}`} />
                   )}

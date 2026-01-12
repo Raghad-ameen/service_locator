@@ -7,11 +7,9 @@ import { Autoplay, EffectFade } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-fade";
 // ===================== استيراد صور السلايدر =====================
-import rahaf from "../assets/rahaf.png";
-import honey from "../assets/honey.png";
-import mobile from "../assets/mobile.png";
-import hall from "../assets/hall.png";
-import haraz from "../assets/haraz.png";
+import "swiper/css";
+import "swiper/css/effect-fade";
+import "swiper/css/autoplay";
 
 // ===================== استيراد صورة النبذة =====================
 import mapImage from "../assets/map.png";
@@ -41,7 +39,6 @@ const Home = () => {
       .catch(err => console.error("خطأ تحميل الإعلانات:", err));
   }, []);
 
-
   useEffect(() => {
     if (!state) return;
 
@@ -58,46 +55,6 @@ const Home = () => {
     }
   }, [state]);
 
-  // ===================== بيانات السلايدر الاعلانات =====================
-  const slides = [
-    {
-      title: "رهف ستور",
-      text: `سيروم رهف للأظافر
-      يغذي الظفر من العمق بزيت الجوجوبا والاسكوالين
-      يقوي الأظافر مع فيتامينات A & E
-      يحمي من الالتهابات بزيت شجرة الشاي
-      تركيبة طبيعية خالية من البارابين والفثالات
-      مش بس يطول الظفر ... يطول وهو قوي وثابت
-    جربيه واحصلي عليه بسعر التخفيض + التوصيل مجاني داخل صنعاء`,
-      image: rahaf,
-    },
-    {
-      title: "فخر العسل اليمني",
-      text: `علبة بسيطة من فخر العسل اليمني هي سر السعادة والراحة
-عسل سدر فاخر
-اشتري كيلو واحصل على نصف كيلو مجاناً
-العرض لمدة ٣ أيام فقط`,
-      image: honey,
-    },
-    {
-      title: "الخالد موبايل",
-      text: `من الخالد موبايل نقدم لكم تلفون بسعر خيالي فقط ب39500 ريال يمني.
-الهاتف الأسطوري E26 من ETEL.`,
-      image: mobile,
-    },
-    {
-      title: "قاعة قصر السلطان",
-      text: `اجعلي ليلة زفافك ذكرى لا تُنسى.
-قاعة قصر السلطان للأفراح هي المكان الأنسب.`,
-      image: hall,
-    },
-    {
-      title: "العمادي سنتر",
-      text: `يسرّ حراز كوفي أن يقدم لكم خصم 20% على جميع الطلبات.
-العرض لمدة 3 أيام فقط.`,
-      image: haraz,
-    },
-  ];
   return (
     <div dir="rtl" className="font-['Montserrat-Arabic'] font-light text-[15px] mx-auto">
 
@@ -105,12 +62,13 @@ const Home = () => {
       <section ref={heroRef} id="hero" className="scroll-mt-40 mx-auto relative z-2 overflow-hidden pt-5 lg:px-10 md:px-5">
         <div className="w-full lg:h-[85vh] h-[30vh] overflow-hidden md:rounded-3xl">
           <Swiper
+            key={ads.length}
             slidesPerView={1}
             loop={ads.length > 1}
-            autoplay={ads.length > 1 ? { delay: 3000 } : false}
+            autoplay={ads.length > 1 ? { delay: 3000 } : undefined}
             speed={800} // duration of fade
             effect="fade"
-          
+            fadeEffect={{ crossFade: true }}
             modules={[Autoplay, EffectFade]}
             onSlideChange={(swiper) => setCurrentSlide(swiper.realIndex)}
             className="h-full"

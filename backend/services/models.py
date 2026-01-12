@@ -110,7 +110,6 @@ class Ad(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()                       # يُحسب من الباقة عند الإنشاء
     status = models.CharField(max_length=20, choices=AdStatus.choices, default=AdStatus.PENDING)
-    delete_allowed = models.BooleanField(default=False) # صلاحية الحذف المبكر يمنحها الأدمن
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

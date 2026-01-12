@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from .models import CustomUser, Suggestion
+from .models import CustomUser, Suggestion, Review, CommentImage, Comment
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
@@ -83,8 +83,52 @@ class UserListSerializer(serializers.ModelSerializer):
         return Service.objects.filter(owner=obj).exists()
 
 class SuggestionSerializer(serializers.ModelSerializer):
-    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
-
+    user_name = serializers.CharField(source="user.username", read_only=True)
+    user_image = serializers.ImageField(source="user.profile_image", read_only=True)
     class Meta:
         model = Suggestion
-        fields = ["id", "user_name", "message", "response", "created_at"]
+        fields = ["id", "user_name","user_image", "message", "response", "created_at"]
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ["id", "rating", "created_at"]
+
+class CommentImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
+    class Meta:
+        model = CommentImage
+        fields = ["id", "image"]
+
+class CommentSerializer(serializers.ModelSerializer):
+    images = CommentImageSerializer(many=True, read_only=True)
+    user_name = serializers.CharField(source="user.username", read_only=True)
+    user_image = serializers.ImageField(source="user.profile_image", read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "user_name",
+            "user_image",
+            "text",
+            "images",
+            "created_at",
+        ]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+
+        # إنشاء التعليق
+        comment = Comment.objects.create(**validated_data)
+
+        # ⭐ هنا نجيب الصور بالطريقة الصح
+        images = request.FILES.getlist("images")
+
+        for image in images:
+            CommentImage.objects.create(
+                comment=comment,
+                image=image
+            )
+
+        return comment

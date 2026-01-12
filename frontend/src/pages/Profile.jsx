@@ -281,7 +281,7 @@ function Profile() {
     setUser(null);  
       setTimeout(() => {
         navigate("/");
-      }, 1000);  // ← توجيه لصفحة الدخول
+      }, 1800);  // ← توجيه لصفحة الدخول
       toast.success("تم تسجيل الخروج");
   };
 
@@ -438,18 +438,6 @@ function Profile() {
         <button onClick={handleLogout} className='rounded-lg text-white bg-primary px-5 py-3 cursor-pointer'>تسجيل الخروج</button>
         <button onClick={confirmDeleteAccount} className='rounded-lg text-white bg-red-600 px-5 py-3 cursor-pointer'>حذف الحساب</button>
       </div>
-
-      <ToastContainer
-        position="top-center"
-        autoClose={4000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 }

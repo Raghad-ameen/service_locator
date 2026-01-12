@@ -102,7 +102,7 @@ const Login = ({onClose, onSwitch}) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="h-[100vh] w-full fixed top-0 left-0 bg-black/50 flex items-center justify-center">
+      className="h-screen w-full fixed top-0 left-0 bg-black/50 flex items-center justify-center">
       <motion.div dir="rtl" 
         onClick={handleContentClick}
         initial={{ scale: 0.8, opacity: 0 }}

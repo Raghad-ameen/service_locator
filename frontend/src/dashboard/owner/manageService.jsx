@@ -636,7 +636,7 @@ const manageService = () => {
       </form>
       {showAddWH && (
         <div onClick={() => setShowAddWH(false)} className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl p-6 w-[600px]">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl p-6 w-150">
             <h3 className="text-lg mb-4">إضافة دوام جديد</h3>
             <AddWH
               ref={addWHRef}

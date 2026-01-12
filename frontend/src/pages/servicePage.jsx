@@ -224,7 +224,7 @@ const ServicePage = () => {
   return (
     <div dir="rtl" className="px-10 font-['Montserrat-Arabic'] font-light text-[15px] flex flex-row min-h-screen">
       {/* بيانات الخدمة */}
-      <div className="flex flex-col items-center gap-5 sticky w-[660px] top-20 h-fit self-start pt-10">
+      <div className="flex flex-col items-center gap-5 sticky w-165 top-20 h-fit self-start pt-10">
         <div className="relative flex justify-center">
           <img src={service.cover_image} className="h-70 w-150 rounded-3xl object-cover" alt="" />
           <img src={service.logo_image} className='absolute -bottom-10 rounded-full shadow-[0_4px_6px_1px_rgba(0,0,0,0.2)] h-30 w-30' />
@@ -308,7 +308,7 @@ const ServicePage = () => {
           </p>
 
           {service.latitude && service.longitude && (
-            <div className="w-full h-[400px] rounded-3xl shadow-sm border border-gray-200 overflow-hidden mt-4">
+            <div className="w-full h-100 rounded-3xl shadow-sm border border-gray-200 overflow-hidden mt-4">
               <MapContainer
                 center={[service.latitude, service.longitude]}
                 zoom={15}

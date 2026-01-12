@@ -8,14 +8,14 @@ const FavoriteDropdown = () => {
   return (
     <div
       dir="rtl"
-      className="w-[420px] bg-white rounded-[22px] overflow-hidden border border-[#E6EAF0] shadow-[0_6px_18px_rgba(0,0,0,0.10)]"
+      className="w-105 bg-white rounded-[22px] overflow-hidden border border-[#E6EAF0] shadow-[0_6px_18px_rgba(0,0,0,0.10)]"
     >
 
       <div className="bg-[#17A36B] text-white text-center py-3 font-semibold">
         {favorites.length} خدمات مفضلة
       </div>
 
-      <div className="p-4 space-y-4 max-h-[320px] overflow-y-auto">
+      <div className="p-4 space-y-4 max-h-80 overflow-y-auto">
         {favorites.length === 0 && (
           <p className="text-center text-gray-500 text-sm">
             لا توجد خدمات مفضلة
@@ -38,7 +38,7 @@ const FavoriteDropdown = () => {
                 className="w-12 h-12 rounded-full object-cover"
               />
 
-              <div className="text-right max-w-[230px]">
+              <div className="text-right max-w-57.5">
                 <h4 className="font-semibold text-sm truncate">
                   {service.title}
                 </h4>
@@ -51,7 +51,7 @@ const FavoriteDropdown = () => {
             {/* ❤️ التعديل الوحيد هنا */}
             <button
               onClick={() => toggleFavorite({ id: service.id })}
-              className="flex-shrink-0"
+              className="shrink-0"
             >
               <HeartIcon className="w-6 h-6 text-red-500" />
             </button>

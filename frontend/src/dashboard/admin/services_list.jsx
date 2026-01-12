@@ -161,7 +161,7 @@ const ServicesList = () => {
                 <tr className="text-center flex text-primary p-2 bg-primary-50/30 rounded">
                   <th className="p-2 flex-1 font-medium">الصورة</th> 
                   <th className="p-2 flex-1 font-medium">الاسم</th> 
-                  <th className="p-2 flex-[2] font-medium">النوع</th> 
+                  <th className="p-2 flex-2 font-medium">النوع</th> 
                   <th className="p-2 flex-1 font-medium">صاحب الخدمة</th> 
                   <th className="p-2 flex-1 font-medium"/>
                 </tr>
@@ -182,7 +182,7 @@ const ServicesList = () => {
                         />
                       </td>
                       <td className="p-2 flex-1">{service.title}</td>
-                      <td className="p-2 flex-[2]">{service.category?.name}</td>
+                      <td className="p-2 flex-2">{service.category?.name}</td>
                       <td className="p-2 flex-1">{service.owner}</td>
                       <td className="p-2 flex-1 flex gap-4 items-center justify-center">
                         <TrashIcon OnClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذه الخدمة ؟", onConfirm: () => handleDeleteService(service.id)}) } className="cursor-pointer" />

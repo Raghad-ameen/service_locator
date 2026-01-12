@@ -152,12 +152,12 @@ const AdminNav = () => {
                     <Icon className={`w-5 h-5 text-gray-500 ${isActive ? "text-primary-600" : "group-hover:text-primary-600"}`} />
                     <span className={`text-gray-900 ${isActive ? "text-primary-600" : "group-hover:text-primary-600"}`} >{label} </span>
                     {label === "إدارة الخدمات" && pendingCount > 0 && (
-                      <span className={`mr-1 ${isActive ? "bg-primary" : "group-hover:bg-primary bg-red-500"} text-white text-[10px] px-[7px] py-0.5 rounded-full`}>
+                      <span className={`mr-1 ${isActive ? "bg-primary" : "group-hover:bg-primary bg-red-500"} text-white text-[10px] px-1.75 py-0.5 rounded-full`}>
                         {pendingCount}
                       </span>
                     )}
                     {label === "إدارة الإعلانات" && AdvpendingCount > 0 && (
-                      <span className={`mr-1 ${isActive ? "bg-primary" : "group-hover:bg-primary bg-red-500"} text-white text-[10px] px-[7px] py-0.5 rounded-full`}>
+                      <span className={`mr-1 ${isActive ? "bg-primary" : "group-hover:bg-primary bg-red-500"} text-white text-[10px] px-1.75 py-0.5 rounded-full`}>
                         {AdvpendingCount}
                       </span>
                     )}

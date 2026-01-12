@@ -76,7 +76,7 @@ export default function TimePickerCustom({ value, onChange, disabled, className 
   }, [hour, minute, period]);
 
   return (
-    <div ref={wrapperRef} className="relative w-[160px] font-['Montserrat-Arabic'] font-light text-[14px]">
+    <div ref={wrapperRef} className="relative w-40 font-['Montserrat-Arabic'] font-light text-[14px]">
       {/* INPUT */}
       <div
         onClick={() => {

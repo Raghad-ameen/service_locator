@@ -32,13 +32,13 @@ const services = () => {
   }, []);
 
   return (
-    <div dir="rtl" className="w-full px-20 pt-[20px] flex flex-col gap-3 font-['Montserrat-Arabic'] font-light text-[15px]">
+    <div dir="rtl" className="w-full px-20 pt-5 flex flex-col gap-3 font-['Montserrat-Arabic'] font-light text-[15px]">
       {/* ================== الفلاتر ================== */}
       <div className="flex gap-3 justify-start text-sm text-gray-600 pb-2">
-        <button className="flex-shrink-0 border border-gray-200 rounded-xl px-4 py-2 bg-white hover:bg-gray-50"> الأقرب إلى موقعك</button>
-        <button className="flex-shrink-0 border border-gray-200 rounded-xl px-4 py-2 bg-white hover:bg-gray-50">الأعلى تقييماً</button>
+        <button className="shrink-0 border border-gray-200 rounded-xl px-4 py-2 bg-white hover:bg-gray-50"> الأقرب إلى موقعك</button>
+        <button className="shrink-0 border border-gray-200 rounded-xl px-4 py-2 bg-white hover:bg-gray-50">الأعلى تقييماً</button>
         {/* المديرية */}
-        <div className="relative flex-shrink-0 border border-gray-200 rounded-xl p-2">
+        <div className="relative shrink-0 border border-gray-200 rounded-xl p-2">
           <select className="focus:outline-none cursor-pointer">
             <option hidden>المديرية</option>
             <option>مديرية السبعين</option>
@@ -46,7 +46,7 @@ const services = () => {
           </select>
         </div>
         {/* الشارع */}
-        <div className="relative flex-shrink-0 border border-gray-200 rounded-xl p-2">
+        <div className="relative shrink-0 border border-gray-200 rounded-xl p-2">
           <select className="focus:outline-none cursor-pointer">
             <option hidden>الشارع</option>
             <option>شارع حدة</option>
@@ -54,7 +54,7 @@ const services = () => {
           </select>
         </div>
         {/* السعر */}
-        <div className="relative flex-shrink-0 border border-gray-200 rounded-xl p-2">
+        <div className="relative shrink-0 border border-gray-200 rounded-xl p-2">
           <select className="focus:outline-none cursor-pointer">
             <option hidden>السعر</option>
             <option>من الأقل إلى الأعلى</option>
@@ -96,7 +96,7 @@ const services = () => {
         </div>
 
         {/* -------- الخريطة -------- */}
-        <div className="lg:w-[50%] w-full h-[500px] rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="lg:w-[50%] w-full h-125 rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
           <MapContainer
             center={[15.3694, 44.191]}
             zoom={13}

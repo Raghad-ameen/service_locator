@@ -84,7 +84,7 @@ const Home = () => {
                   />
 
                   {/* خلفية غامقة */}
-                  <div className="absolute inset-0 bg-gradient-to-l from-black/70 to-transparent z-10" />
+                  <div className="absolute inset-0 bg-linear-to-l from-black/70 to-transparent z-10" />
 
                   {/* النص */}
                   <div className="absolute top-1/4 md:right-20 right-5 z-20">
@@ -92,7 +92,7 @@ const Home = () => {
                       {ad.service_title}
                     </p>
 
-                    <p className="text-white lg:text-2xl md:text-lg text-base leading-[2.2rem] max-w-[500px]">
+                    <p className="text-white lg:text-2xl md:text-lg text-base leading-[2.2rem] max-w-125">
                       {ad.description}
                     </p>
                   </div>
@@ -117,7 +117,7 @@ const Home = () => {
             </p>
           </div>
           {/* الصورة */}
-          <img src={mapImage} alt="map" className="w-[550px] max-w-[90%] h-auto object-contain drop-shadow-lg"/>
+          <img src={mapImage} alt="map" className="w-137.5 max-w-[90%] h-auto object-contain drop-shadow-lg"/>
       </section>
 
       {/* ======================= الخدمات ======================= */}

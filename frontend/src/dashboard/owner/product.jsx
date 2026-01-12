@@ -230,7 +230,7 @@ const ProductsPage = () => {
       {/* ---------------------- الهيدر ---------------------- */}
       <div className="flex justify-between items-center px-4 my-8 mx-5">
         <h1 className="text-lg text-primary-600 font-normal">إدارة المنتجات</h1>
-        <button onClick={openAddModal} className="flex h-fit items-center gap-2 cursor-pointer text-primary-600 bg-gradient-to-l from-primary/10 to-primary/50 px-4 py-2.5 rounded-full">
+        <button onClick={openAddModal} className="flex h-fit items-center gap-2 cursor-pointer text-primary-600 bg-linear-to-l from-primary/10 to-primary/50 px-4 py-2.5 rounded-full">
           <PlusIcon className="w-5" />
           منتج جديد
         </button>
@@ -244,7 +244,7 @@ const ProductsPage = () => {
               <tr className="text-center flex text-primary p-2 bg-primary-50/30 rounded">
                 <th className="p-2 flex-1">الصورة</th>
                 <th className="p-2 flex-1">الاسم</th>
-                <th className="p-2 flex-[2]">الوصف</th>
+                <th className="p-2 flex-2">الوصف</th>
                 <th className="p-2 flex-1">السعر</th>
                 <th className="p-2 flex-1" />
               </tr>
@@ -267,7 +267,7 @@ const ProductsPage = () => {
                   </td>
 
                   <td className="p-2 flex-1">{prod.name}</td>
-                  <td className="p-2 flex-[2]">{prod.description}</td>
+                  <td className="p-2 flex-2">{prod.description}</td>
                   <td className="p-2 flex-1">{prod.price} ريال</td>
 
                   <td className="p-2 flex-1 flex gap-4 items-center justify-center">

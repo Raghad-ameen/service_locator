@@ -199,7 +199,7 @@ function StatCard({ title, value, type }) {
 
   return (
     <div className="relative bg-white rounded-2xl border border-[#E5F6EF] px-5 py-5 flex justify-between shadow-sm">
-      <span className={`absolute right-2 top-5 bottom-5 w-[3px] rounded-full ${c.bar}`} />
+      <span className={`absolute right-2 top-5 bottom-5 w-0.75 rounded-full ${c.bar}`} />
 
       <div className="text-right">
         <p className="text-gray-700 font-light text-base md:text-lg mb-2">{title}</p>

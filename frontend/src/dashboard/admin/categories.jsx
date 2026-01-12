@@ -193,7 +193,7 @@ const Categories = () => {
     <div className='flex flex-col text-secondary-900 p-6 font-["Montserrat-Arabic"] text-[14px]'>
       <div className='flex justify-between px-4'>
         <h1 className='m-4 text-lg text-primary-600 font-normal'>إدارة الأقسام</h1>
-        <button onClick={() => setShowCategoryModal(true)} className='flex h-fit items-center gap-2 cursor-pointer text-primary-600 bg-gradient-to-l from-primary/10 to-primary/50 transition-colors duration-400 ease-in transform hover:from-primary/50 hover:to-primary/10  px-4 py-2.5 rounded-full'>
+        <button onClick={() => setShowCategoryModal(true)} className='flex h-fit items-center gap-2 cursor-pointer text-primary-600 bg-linear-to-l from-primary/10 to-primary/50 transition-colors duration-400 ease-in transform hover:from-primary/50 hover:to-primary/10  px-4 py-2.5 rounded-full'>
           <PlusIcon className='w-5'/>
            قسم جديد
         </button>

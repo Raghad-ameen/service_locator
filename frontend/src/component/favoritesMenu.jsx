@@ -48,7 +48,7 @@ const FavoritesMenu = () => {
       {open && (
         <div
           ref={boxRef}
-          className="absolute top-10 left-200 right-0 z-[9999]"
+          className="absolute top-10 left-200 right-0 z-9999"
         >
           <FavoriteDropdown />
         </div>

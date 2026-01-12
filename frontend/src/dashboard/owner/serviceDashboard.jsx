@@ -1,13 +1,6 @@
-import {
-  Chart as ChartJS,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Filler,
-  Tooltip,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
+import {Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Filler, Tooltip} from "chart.js";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 ChartJS.register(
   LineElement,
@@ -20,6 +13,31 @@ ChartJS.register(
 import {StatCard, ProductItem, SuggestionItem} from '../../component/chart'; 
 
 const serviceDashboard=()=> {
+
+  const [stats, setStats] = useState({
+    visits: 0,
+    likes: 0,
+    products: 0,
+    latest_products: [],
+    latest_suggestions: []
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const fetchDashboard = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:8000/api/services/owner-dashboard/", {
+          headers: { Authorization: `Token ${token}` }
+        });
+        setStats(res.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
   return (
     <div dir="rtl" className="min-h-screen bg-[#F8FBFB] flex">
       {/* ===== Main ===== */}
@@ -31,9 +49,9 @@ const serviceDashboard=()=> {
 
         {/* ===== Stat Cards ===== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-10">
-          <StatCard title="عدد الزيارات" value="300" type="views" />
-          <StatCard title="عدد المنتجات" value="50" type="products" />
-          <StatCard title="عدد الإعجابات" value="100" type="likes" />
+          <StatCard title="عدد الزيارات" value={stats.visits} type="views" />
+          <StatCard title="عدد المنتجات" value={stats.products} type="products" />
+          <StatCard title="عدد الإعجابات" value={stats.likes} type="likes" />
         </div>
 
         {/* ===== آخر المنتجات المضافة ===== */}
@@ -48,18 +66,15 @@ const serviceDashboard=()=> {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-            <ProductItem
-              name="لاتيه كرامل"
-              desc="اسبريسو + حليب + موس كراميل"
-              price="1500 ريال"
-              img="https://i.pravatar.cc/40?img=1"
-            />
-            <ProductItem
-              name="موكا"
-              desc="اسبريسو + شوكولاتة + حليب"
-              price="1000 ريال"
-              img="https://i.pravatar.cc/40?img=2"
-            />
+            {stats.latest_products.map((p, i) => (
+              <ProductItem
+                key={i}
+                name={p.name}
+                desc={p.description}
+                price={`${p.price} ريال`}
+                img={p.img || "https://i.pravatar.cc/40?img=1"}
+              />
+            ))}
           </div>
         </div>
 
@@ -75,22 +90,20 @@ const serviceDashboard=()=> {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-            <SuggestionItem
-              name="صالح النوار"
-              text="اقترح إضافة مشروبات جديدة وتفعيل نظام نقاط للعملاء الدائمين."
-              img="https://i.pravatar.cc/40?img=3"
-            />
-            <SuggestionItem
-              name="علي الشيخ"
-              text="نحتاج تحسين سرعة الطلب وإضافة خيار الدفع الإلكتروني."
-              img="https://i.pravatar.cc/40?img=4"
-            />
+            {stats.latest_suggestions.map((s, i) => (
+              <SuggestionItem
+                key={i}
+                name={s.name}
+                text={s.text}
+                img={s.img || "https://i.pravatar.cc/40?img=2"}
+              />
+            ))}
           </div>
         </div>
-
       </main>
     </div>
   );
-}
-export default serviceDashboard
+};
+
+export default serviceDashboard;
 

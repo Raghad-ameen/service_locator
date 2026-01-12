@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus
-from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer
+from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus, Favorite
+from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer, FavoriteSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from users.models import Suggestion, CustomUser
 from django.utils import timezone
@@ -14,6 +14,7 @@ from datetime import timedelta
 from rest_framework.permissions import IsAdminUser
 from datetime import date
 from calendar import monthrange
+from django.shortcuts import get_object_or_404  
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -25,7 +26,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     
 class ServiceViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceSerializer
-
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'description', 'category__name', 'owner__username'] 
+    
     def get_queryset(self):
         user = self.request.user
 
@@ -41,9 +44,6 @@ class ServiceViewSet(viewsets.ModelViewSet):
         # غير الأدمن → يشوف فقط خدماته المقبولة
         return Service.objects.filter(owner=user, status="approved")
 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description', 'category__name', 'owner__username'] 
-    
     # إنشاء خدمة جديدة (تكون قيد المراجعة)
     def perform_create(self, serializer):
         service = serializer.save(owner=self.request.user, status='pending')
@@ -84,7 +84,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
         send_notification(
             user_id=service.owner.id,
-            message=f"✅ تم قبول خدمتك ({service.title}) بنجاح"
+            message=f"تم قبول خدمتك ({service.title}) بنجاح"
         )
 
         return Response({'status': 'approved'})
@@ -112,7 +112,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
         # أنشئ إشعار لصاحب الخدمة
         send_notification(
             user_id=service.owner.id,
-            message=f"❌ تم رفض خدمتك ({service.title}) بسبب: {reason}"
+            message=f"تم رفض خدمتك ({service.title}) بسبب: {reason}"
         )
 
         # احذف الخدمة من قاعدة البيانات
@@ -181,7 +181,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         context["request"] = self.request
         return context
 
-
 class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
 
@@ -195,7 +194,6 @@ class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
             service__status="approved"  # لو عندك حالة
         )
 
-# ------------------- Delete Product Image -------------------
 class DeleteProductImageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -220,6 +218,7 @@ class DeleteProductImageAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+# ------------------adv------------------------
 class IsProvider(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated  # بس لتبسيط؛ ممكن تربطينها بـ role='provider'
@@ -272,6 +271,34 @@ class AdminAdViewSet(viewsets.ModelViewSet):
         serializer = AdListSerializer(ads, many=True)
         return Response(serializer.data)
     
+    # قبول الإعلان
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        ad = self.get_object()
+        ad.status = AdStatus.APPROVED
+        ad.save()
+
+        send_notification(
+            user_id=ad.owner.id,
+            message=f"تم قبول إعلانك ✅"
+        )
+
+        return Response({'status': 'approved'})
+
+    # رفض الإعلان
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        ad = self.get_object()
+        reason = request.data.get('reason')
+        # إرسال إشعار لصاحب الإعلان
+        send_notification(
+            user_id=ad.owner.id,
+            message=f"تم رفض إعلانك ({reason}) ❌"
+        )
+        # احذف الخدمة من قاعدة البيانات
+        ad.delete()
+        return Response({"status": "rejected"})
+    
 class PublicAdViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     serializer_class = AdListSerializer
@@ -294,12 +321,32 @@ class AdminAdPackageViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = AdPackageSerializer
     queryset = AdPackage.objects.all()
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # ✅ فحص ثابت بدون related_name
+        if Ad.objects.filter(package=instance).exists():
+            return Response(
+                {"detail": "لا يمكن حذف الباقة لأنها مستخدمة في إعلانات"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except (ProtectedError, IntegrityError):
+            return Response(
+                {"detail": "لا يمكن حذف الباقة لأنها مرتبطة ببيانات أخرى"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
 class ProviderAdPackageViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsProvider]
     serializer_class = AdPackageSerializer
     queryset = AdPackage.objects.filter(is_active=True)
 
+#---------------------owner dashboard----------------------
 class OwnerDashboard(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -320,15 +367,16 @@ class OwnerDashboard(APIView):
             "likes": likes,
             "products": products_count,
             "latest_products": [
-                {"name": p.name, "description": p.description, "price": p.price}
+                {"name": p.name, "description": p.description, "price": p.price, "img": p.images.first().photo.url if p.images.exists() else ""}
                 for p in latest_products
             ],
             "latest_suggestions": [
-                {"user": s.user.get_full_name(), "message": s.message}
+                {"name": s.user.get_full_name(), "text": s.message, "img": s.user.profile_image.url if s.user.profile_image else ""}
                 for s in latest_suggestions
             ]
         })
 
+#--------------------admin dashboard-----------------------
 class AdminDashboardStatsAPIView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
@@ -470,3 +518,36 @@ class AdminMonthlyUsersStatsAPIView(APIView):
             ],
             "data": data,
         })
+
+#  المفضلة
+class FavoriteToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, service_id):
+        service = get_object_or_404(Service, id=service_id)
+
+        favorite = Favorite.objects.filter(
+            user=request.user,
+            service=service
+        ).first()
+
+        if favorite:
+            favorite.delete()
+            return Response({"favorite": False})
+
+        Favorite.objects.create(
+            user=request.user,
+            service=service
+        )
+        return Response({"favorite": True})
+    
+class FavoriteListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        favorites = Favorite.objects.filter(user=request.user)
+        services = [fav.service for fav in favorites]
+
+        serializer = ServiceSerializer(services, many=True)
+        return Response(serializer.data)
+

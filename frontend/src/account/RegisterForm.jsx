@@ -7,7 +7,7 @@ const RegisterForm = ({ onClose, onSwitch }) => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
-    email: "",
+    // email: "",
     password: "",
     password2: "",
     phone: "",
@@ -38,13 +38,13 @@ const RegisterForm = ({ onClose, onSwitch }) => {
     if (!formData.username.trim()) newErrors.username = "الاسم مطلوب";
 
     // ✅ التحقق من البريد الإلكتروني
-    if (!formData.email.trim()) {
-      newErrors.email = "البريد الإلكتروني مطلوب";
-    } else if (
-      !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)
-    ) {
-      newErrors.email = "البريد الإلكتروني غير صحيح";
-    }
+    // if (!formData.email.trim()) {
+    //   newErrors.email = "البريد الإلكتروني مطلوب";
+    // } else if (
+    //   !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)
+    // ) {
+    //   newErrors.email = "البريد الإلكتروني غير صحيح";
+    // }
 
     // ✅ التحقق من كلمة المرور
     const pass = formData.password;
@@ -110,7 +110,7 @@ const RegisterForm = ({ onClose, onSwitch }) => {
           {
             id: data.id,
             username: data.username,
-            email: data.email,
+            // email: data.email,
             phone: data.phone,
             profile_image: data.profile_image,
             user_type: data.user_type,
@@ -126,7 +126,7 @@ const RegisterForm = ({ onClose, onSwitch }) => {
         );
         setFormData({
           username: "",
-          email: "",
+          // email: "",
           password: "",
           password2: "",
           phone: "",
@@ -144,7 +144,7 @@ const RegisterForm = ({ onClose, onSwitch }) => {
             // رسائل الأخطاء الشائعة مترجمة
             if (msg.includes("already exists") || msg.includes("exists")) {
               if (field === "username") return "اسم المستخدم مستخدم مسبقًا";
-              if (field === "email") return "البريد الإلكتروني مستخدم مسبقًا";
+              // if (field === "email") return "البريد الإلكتروني مستخدم مسبقًا";
               if (field === "phone") return "رقم الهاتف مستخدم مسبقًا";
               return "القيمة مستخدمة مسبقًا";
             }
@@ -163,11 +163,11 @@ const RegisterForm = ({ onClose, onSwitch }) => {
               "username"
             );
 
-          if (data.email)
-            serverErrors.email = translateError(
-              Array.isArray(data.email) ? data.email[0] : data.email,
-              "email"
-            );
+          // if (data.email)
+          //   serverErrors.email = translateError(
+          //     Array.isArray(data.email) ? data.email[0] : data.email,
+          //     "email"
+          //   );
 
           if (data.phone)
             serverErrors.phone = translateError(
@@ -234,7 +234,7 @@ const RegisterForm = ({ onClose, onSwitch }) => {
           </div>
 
           {/* email*/}
-          <div>
+          {/* <div>
             <input
               type="text"
               name="email"
@@ -244,7 +244,7 @@ const RegisterForm = ({ onClose, onSwitch }) => {
               className="w-full border border-gray-400 bg-gray-50 px-5 py-3.5 rounded-xl"
             />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-          </div>
+          </div> */}
 
           {/* password*/}
           <div>

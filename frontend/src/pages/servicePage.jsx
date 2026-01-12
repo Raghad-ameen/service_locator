@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from "react-router-dom";
-import { HeartIcon, StarIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
-import { StarIcon as StarOutline, CameraIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolid, StarIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartOutline, StarIcon as StarOutline, CameraIcon } from '@heroicons/react/24/outline';
 import { Magicpen, Star } from '../component/icons';
 import default_image from '../assets/haraz.png';
+// ✅ context
+import { useFavorites } from "../context/favoriteContext";
+
 const ServicePage = () => {
   const { id } = useParams(); // رقم الخدمة
   const [service, setService] = useState(null);
@@ -15,7 +18,7 @@ const ServicePage = () => {
   const [addreview, setAddreview] = useState(false);
   const [comments, setComments] = useState([]);
   const [userRating, setUserRating] = useState(null);
-  const [ratingSummary, setRatingSummary] = useState({average: 0, count: 0});
+  const [ratingSummary, setRatingSummary] = useState({ average: 0, count: 0 });
   const [message, setMessage] = useState("");
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
@@ -23,6 +26,12 @@ const ServicePage = () => {
 
 
   const navigate = useNavigate();
+  // ✅ المفضلة من الكونتكست
+  const { favorites, toggleFavorite } = useFavorites();
+
+  // ⭐⭐ الحل هنا
+  const [isFavoriteLocal, setIsFavoriteLocal] = useState(false);
+
   function formatTimeToArabic(time) {
     if (!time) return "";
 
@@ -74,10 +83,10 @@ const ServicePage = () => {
         },
       }
     )
-    .then(res => {
-      setUserRating(res.data.rating); // صح 100%
-    })
-    .catch(() => setUserRating(null));
+      .then(res => {
+        setUserRating(res.data.rating); // صح 100%
+      })
+      .catch(() => setUserRating(null));
   }, [id]);
 
   useEffect(() => {
@@ -182,6 +191,9 @@ const ServicePage = () => {
 
 
   if (!service) return <div>الخدمة غير موجودة</div>;
+  const isFavorite = favorites.some(
+    (fav) => (fav.service?.id ?? fav.id) === service.id
+  );
 
   return (
     <div dir="rtl" className="px-10 font-['Montserrat-Arabic'] font-light text-[15px] flex flex-row min-h-screen">
@@ -194,7 +206,19 @@ const ServicePage = () => {
         <h1 className="text-2xl font-bold mt-12">{service.title}</h1>
         <p className="text-gray-600 text-wrap w-80 text-center">{service.description}</p>
         <div className='flex gap-6'>
-          <HeartIcon className='h-6 w-6 text-red-500' />
+          {/* ❤️ المفضلة (مثبتة صح) */}
+          <button
+            onClick={() => {
+              setIsFavoriteLocal((prev) => !prev); // 🔥 يثبت اللون فورًا
+              toggleFavorite(service);             // 🔁 تحديث السيرفر
+            }}
+          >
+            {isFavorite ? (
+              <HeartSolid className="h-6 w-6 text-red-500" />
+            ) : (
+              <HeartOutline className="h-6 w-6 text-gray-400" />
+            )}
+          </button>
           <div className='flex gap-2'>
             <StarIcon className='h-6 w-6 text-yellow-300' />
             <span className="text-base font-normal">
@@ -244,7 +268,6 @@ const ServicePage = () => {
           <h2 className="text-lg font-medium mb-3">معلومات التواصل</h2>
           <p className='pb-3 mb-2'>الهاتف: {service.phone}</p>
           <p className='border-t border-gray-300 py-2 mb-2'>الواتس: {service.whatsapp}</p>
-          <p className='border-t border-gray-300 py-2 mb-2'>الإيميل: {service.email}</p>
         </div>
         {/* الموقع */}
         <div className="mt-10">
@@ -373,24 +396,24 @@ const ServicePage = () => {
             </div>
 
             {!userRating && (
-              <div>
+              <div className='flex flex-col items-center'>
                 <p className="font-extralight text-gray-700">
                   تقيمك للخدمة يساعدنا في تقديم الافضل
                 </p>
                 {/* ⭐ Rating */}
-                <div className="flex gap-1">
+                <div className="flex gap-1 ">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <StarIcon
                       key={star}
                       onClick={() => !userRating && setRating(star)}
-                      className={`h-6 w-6 cursor-pointer ${(userRating || rating) >= star
-                          ? "text-yellow-400"
-                          : "text-gray-300"
+                      className={`h-6 w-6 cursor-pointer mt-5 mx-1 ${(userRating || rating) >= star
+                        ? "text-yellow-400"
+                        : "text-gray-200"
                         }`}
                     />
                   ))}
                 </div>
-                <hr className="text-gray-300" />
+                <hr className="text-gray-300 w-full mt-5" />
               </div>
             )}
 

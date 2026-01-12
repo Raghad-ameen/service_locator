@@ -9,7 +9,7 @@ def default_profile_image():
 class CustomUser(AbstractUser):
     phone = models.CharField(max_length=9, unique=True, validators=[ RegexValidator( regex=r'^7\d{8}$',message="رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام")])
     profile_image = models.ImageField(upload_to='user_profile/', default=default_profile_image, blank=True, null=True)
-    email = models.EmailField(unique=True)
+    # email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True)
     USER_TYPES = (
         ('admin', 'مشرف'),
@@ -17,22 +17,10 @@ class CustomUser(AbstractUser):
         ('owner', 'صاحب خدمة'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='user')
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'phone']
+    USERNAME_FIELD = 'phone'
+    REQUIRED_FIELDS = ['username']
     def __str__(self):
-        return self.email if self.email else self.phone
-
-class Notification(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="notifications")
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"إشعار لـ {self.user.username}: {self.message[:30]}"
-    
-    from django.db import models
-
+        return self.phone
 class Suggestion(models.Model):
     service = models.ForeignKey("services.Service", on_delete=models.CASCADE, related_name="suggestions")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # ← هذا هو الصحيح

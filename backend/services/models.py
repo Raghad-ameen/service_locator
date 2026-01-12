@@ -1,11 +1,7 @@
 from django.db import models
 from users.models import CustomUser
-from django.utils import timezone
-from django.conf import settings
-import os
 from django.db import models
-from django.dispatch import receiver
-
+from django.conf import settings
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="اسم القسم")
@@ -32,7 +28,7 @@ class Service(models.Model):
     # location_map = models.TextField(blank=True, null=True)  # يمكن تخزين إحداثيات أو رابط خريطة
 
     # التواصل
-    email = models.EmailField(blank=True, null=True)
+    # email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     whatsapp = models.CharField(max_length=20, blank=True, null=True)
     
@@ -89,7 +85,7 @@ class AdStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
     APPROVED = 'approved', 'Approved'
     REJECTED = 'rejected', 'Rejected'
-    EXPIRED = 'expired', 'Expired'  # حالة منطقية عند انتهاء المدة
+    EXPIRED = 'expired', 'Expired'   # حالة منطقية عند انتهاء المدة
 
 class AdPackage(models.Model):
     name = models.CharField(max_length=50)              # باقة (يوم، يومين...)
@@ -118,8 +114,21 @@ class Ad(models.Model):
         from django.utils import timezone
         return self.status == AdStatus.APPROVED and self.start_date <= timezone.localdate() <= self.end_date
 
-@receiver(models.signals.post_delete, sender=ProductImage)
-def auto_delete_image_on_delete(sender, instance, **kwargs):
-    if instance.photo:
-        if os.path.isfile(instance.photo.path):
-            os.remove(instance.photo.path)
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="favorites"
+    )
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="favorited_by"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "service")
+
+    def __str__(self):
+        return f"{self.user} ❤️ {self.service}"

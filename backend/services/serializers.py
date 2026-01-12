@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Service, Category, WorkSchedule, Product, ProductImage, Ad, AdPackage, AdStatus
+from .models import Service, Category, WorkSchedule, Product, ProductImage, Ad, AdPackage, AdStatus, Favorite
 from django.utils import timezone
 from datetime import timedelta
 from datetime import date
@@ -36,7 +36,7 @@ class ServiceSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             'id', 'owner', 'owner_image', 'title', 'description', 'category', 'category_id',
-            'cover_image', 'logo_image','email', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at' 
+            'cover_image', 'logo_image', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at' 
         ]
     
     def get_products(self, obj):
@@ -205,3 +205,15 @@ class AdminAdUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
         fields = ['status']
+
+class FavoriteServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = ["id", "title", "description", "logo_image", "cover_image"]
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    service = FavoriteServiceSerializer(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ["id", "service", "created_at"]

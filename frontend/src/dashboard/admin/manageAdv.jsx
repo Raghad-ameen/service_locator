@@ -6,8 +6,11 @@ import {
   NoSymbolIcon,
   XMarkIcon,
   PlusCircleIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import axios from "axios";
+import { toast } from "react-toastify";
+import ConfirmToast from "../../component/ConfirmToast";
 
 const ManageAdv = () => {
   const token = localStorage.getItem("token");
@@ -137,32 +140,80 @@ const ManageAdv = () => {
   };
 
   /* ================= ACTIONS ================= */
-  const approveAd = async (id) => {
-    await axios.patch(
-      `http://127.0.0.1:8000/api/services/admin/ads/${id}/`,
-      { status: "approved" },
-      { headers: { Authorization: `Token ${token}` } }
-    );
-    fetchPendingAds();
-  };
+  // قبول الإعلان
+const approveAd = async (id) => {
+  await axios.post(
+    `http://127.0.0.1:8000/api/services/admin/ads/${id}/approve/`,
+    {}, // لا بيانات مطلوبة
+    { headers: { Authorization: `Token ${token}` } }
+  );
+  fetchPendingAds();
+};
 
-  const rejectAd = async () => {
-    await axios.patch(
-      `http://127.0.0.1:8000/api/services/admin/ads/${selectedAdId}/`,
-      { status: "rejected", delete_allowed: true },
+// رفض الإعلان
+// رفض الإعلان
+const rejectAd = async () => {
+  if (!selectedAdId) return; // تأكد إنه معرف الإعلان
+
+  try {
+    await axios.post(
+      `http://127.0.0.1:8000/api/services/admin/ads/${selectedAdId}/reject/`,
+      { reason: rejectReason },  // السبب نرسلها للباك
       { headers: { Authorization: `Token ${token}` } }
     );
     setShowRejectForm(false);
     setRejectReason("");
-    fetchPendingAds();
-  };
+    fetchPendingAds(); // تحديث القائمة بعد الرفض
+  } catch (err) {
+    console.error(err);
+    alert("حدث خطأ أثناء رفض الإعلان");
+  }
+};
 
   const deletePackage = async (id) => {
-    await axios.delete(
-      `http://127.0.0.1:8000/api/services/admin/packages/${id}/`,
-      { headers: { Authorization: `Token ${token}` } }
+    try {
+      await axios.delete(
+        `http://127.0.0.1:8000/api/services/admin/packages/${id}/`,
+        { headers: { Authorization: `Token ${token}` } }
+      );
+
+      toast.success("تم حذف الباقة بنجاح");
+      fetchPackages();
+
+    } catch (err) {
+      if (err.response?.status === 400) {
+        toast.error(err.response.data.detail);
+        return; // ⬅️ نوقف هنا
+      }
+
+      // هذا فقط للأخطاء غير المتوقعة
+      console.error(err);
+      toast.error("حدث خطأ غير متوقع");
+    }
+  };
+
+  const showConfirmToast = ({ message, onConfirm }) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-red-600" />}
+          title="حذف باقة"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
     );
-    fetchPackages();
   };
 
   const formatDate = (date) =>
@@ -170,7 +221,7 @@ const ManageAdv = () => {
       year: "numeric",
       month: "long",
       day: "numeric",
-  });
+    });
 
 
   /* ================= UI ================= */
@@ -213,7 +264,7 @@ const ManageAdv = () => {
                 <p className="text-gray-500">{p.price} ريال</p>
 
                 <div className="flex gap-3 self-end mt-2">
-                  <TrashIcon OnClick={() => deletePackage(p.id)} />
+                  <TrashIcon OnClick={() => showConfirmToast({ message: "هل أنت متأكد من انك تريد حذف هذه الباقة", onConfirm: () => deletePackage(p.id) })} />
                   <PencilIcon OnClick={() => openEditPackage(p)} />
                 </div>
               </div>
@@ -225,11 +276,11 @@ const ManageAdv = () => {
       {/* ================= add or edit package MODAL ================= */}
       {showPackageModal && (
         <div onClick={(e) => e.target === e.currentTarget && handleCloseModal()}
-            className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
+          className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-[50%]">
             <div className="flex justify-between">
               <h2>{editingPackage ? "تعديل الباقة" : "إضافة باقة جديدة"}</h2>
-              <XMarkIcon onClick={handleCloseModal} className="w-7 h-7 cursor-pointer"/>
+              <XMarkIcon onClick={handleCloseModal} className="w-7 h-7 cursor-pointer" />
             </div>
             <form onSubmit={savePackage} className="py-4 px-6 flex flex-col gap-6">
               <div>
@@ -249,7 +300,7 @@ const ManageAdv = () => {
                 <label>المدة (أيام)</label>
                 <input
                   type="number"
-                  min="1" 
+                  min="1"
                   step="1"
                   value={packageForm.duration_days}
                   onChange={(e) =>
@@ -270,7 +321,7 @@ const ManageAdv = () => {
                 <label>السعر</label>
                 <input
                   type="number"
-                  min="1000" 
+                  min="1000"
                   step="1"
                   value={packageForm.price}
                   onChange={(e) =>
@@ -368,7 +419,7 @@ const ManageAdv = () => {
           </div>
         </div>
       )}
-      
+
     </div>
   );
 };

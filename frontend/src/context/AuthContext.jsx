@@ -1,10 +1,10 @@
 import { createContext, useContext, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token"));
-
+  
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -27,8 +28,14 @@ export const AuthProvider = ({ children }) => {
     }, 1500);
   };
 
+  const updateUser = (updatedFields) => {
+    const updatedUser = { ...user, ...updatedFields };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login, logout, updateUser}}>
       {children}
     </AuthContext.Provider>
   );

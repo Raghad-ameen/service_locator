@@ -23,7 +23,6 @@ const Create = () => {
   //const [directorate, setDirectorate] = useState('');
   //const [street, setStreet] = useState('');
   //const [locationMap, setLocationMap] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [coverImage, setCoverImage] = useState(null);
@@ -63,8 +62,6 @@ const Create = () => {
     
     if (!category) newErrors.category = "الرجاء اختيار نوع الخدمة";
 
-    if (!email.trim()) newErrors.email = "البريد الإلكتروني مطلوب";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) newErrors.email = "البريد الإلكتروني غير صالح";
     if (!phone.trim()) {
         newErrors.phone = "رقم الهاتف مطلوب";
     } 
@@ -123,7 +120,6 @@ const Create = () => {
     // formData.append('directorate', directorate);
     // formData.append('street', street);
     // formData.append('location_map', locationMap);
-    formData.append('email', email);
     formData.append('phone', phone);
     formData.append('whatsapp', whatsapp);
     if (coverImage) formData.append('cover_image', coverImage);
@@ -306,11 +302,6 @@ const Create = () => {
         {/* contact info */}
           <fieldset className='flex flex-col justify-center w-full mb-10'>
             <legend className='text-lg font-normal text-center mb-10'>معلومات التواصل:</legend>
-            <div className='flex gap-3 border-b border-gray-200'>
-              <FontAwesomeIcon icon={faEnvelope} size='lg' className='text-primary border-l border-gray-300 pl-3 py-1' />
-              <input placeholder='البريد الإلكتروني' value={email} onChange={(e) => setEmail(e.target.value)} className='w-full focus:outline-none pb-5' />
-            </div>
-            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             <div className='flex gap-3 border-b border-gray-200 mt-5'>
               <PhoneIcon className='h-7 text-primary border-l border-gray-300 py-1 pl-3.5'/>
               <input placeholder='رقم الهاتف' value={phone} onChange={(e) => setPhone(e.target.value)} className='w-full focus:outline-none pb-5' />

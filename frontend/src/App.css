@@ -13,9 +13,17 @@
   background: transparent;
 }
 
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .group:hover .icon-loop {
   animation:arrowMove 0.9s ease-in-out infinite;
 }
+
 @keyframes arrowMove {
   0% { transform: translateX(0); }
   50% { transform: translateX(2px); }
@@ -40,15 +48,15 @@
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
   z-index: 998;
 }
 
 /* جميع المتصفحات الحديثة */
 input[type="date"] {
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
 }
 
 

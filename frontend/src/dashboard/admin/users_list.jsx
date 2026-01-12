@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import default_img from "../../../public/media/user_profile/default.png";
-import {TrashIcon} from "../../component/icons"
+import { TrashIcon } from "../../component/icons"
+import { toast } from "react-toastify";
+import ConfirmToast from "../../component/ConfirmToast";
+import {ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const location = useLocation(); 
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,9 +76,6 @@ const UserList = () => {
   // حذف المستخدم
   const deleteUser = async (userId) => {
     const token = localStorage.getItem("token");
-    const confirmed = window.confirm("هل أنت متأكد أنك تريد حذف هذا المستخدم نهائيًا؟");
-
-    if (!confirmed) return;
 
     await fetch(`http://127.0.0.1:8000/api/users/${userId}/delete_user/`, {
       method: "DELETE",
@@ -94,6 +94,30 @@ const UserList = () => {
       localStorage.removeItem("user_type");
       navigate("/");
     }
+  };
+
+  const showConfirmToast = ({ message, onConfirm }) => {
+    toast(
+      ({ closeToast }) => (
+        <ConfirmToast
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-red-600" />}
+          title="حذف مستخدم"
+          message={message}
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            await onConfirm();
+            closeToast();
+          }}
+          onCancel={closeToast}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
   };
 
   // // تعيين ادمن \ تعيين كمستخدم عادي
@@ -143,18 +167,18 @@ const UserList = () => {
       <h2 className="m-4 text-lg text-primary-600 font-normal">ادارة المستخدمين</h2>
       <div className="p-10">
         <table className="w-full">
-        {users.length > 0 &&(
-          <thead>
-            <tr className="text-center flex text-primary p-2 bg-primary-50/30 rounded">
-              <th className="p-2 flex-1 font-medium">الصورة</th>
-              <th className="p-2 flex-1 font-medium">الاسم</th>
-              <th className="p-2 flex-[2] font-medium">الإيميل</th>
-              <th className="p-2 flex-1 font-medium">رقم الهاتف</th>
-              <th className="p-2 flex-1 font-medium">نوع المستخدم</th>
-              <th className="p-2 flex-1 font-medium"/>
-            </tr>
-          </thead>
-        )}
+          {users.length > 0 && (
+            <thead>
+              <tr className="text-center flex text-primary p-2 bg-primary-50/30 rounded">
+                <th className="p-2 flex-1 font-medium">الصورة</th>
+                <th className="p-2 flex-1 font-medium">الاسم</th>
+                {/* <th className="p-2 flex-[2] font-medium">الإيميل</th> */}
+                <th className="p-2 flex-1 font-medium">رقم الهاتف</th>
+                <th className="p-2 flex-1 font-medium">نوع المستخدم</th>
+                <th className="p-2 flex-1 font-medium" />
+              </tr>
+            </thead>
+          )}
           <tbody>
             {users.length > 0 ? (
               users.map((user) => (
@@ -171,12 +195,12 @@ const UserList = () => {
                     />
                   </td>
                   <td className="p-2 flex-1">{user.username}</td>
-                  <td className="p-2 flex-[2]">{user.email}</td>
+                  {/* <td className="p-2 flex-[2]">{user.email}</td> */}
                   <td className="p-2 flex-1">{user.phone}</td>
                   <td className="p-2 flex-1">{user.user_type_display}</td>
                   <td className="p-2 flex-1 flex gap-4 items-center justify-center">
                     <TrashIcon
-                      OnClick={() => deleteUser(user.id)}
+                      OnClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذا المستخدم ؟", onConfirm: () => deleteUser(user.id)}) }
                       className="brightness-150 hover:brightness-110 cursor-pointer"
                     />
                     {/* {user.user_type === "admin" ? (

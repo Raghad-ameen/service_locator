@@ -19,7 +19,9 @@ const AdminDashboard = () => {
   const [servicesChart, setServicesChart] = useState({ labels: [], data: [] });
   const [usersChart, setUsersChart] = useState({ labels: [], data: [] });
 
-  const year = new Date().getFullYear();
+  const [serviceYear, setServiceYear] = useState(new Date().getFullYear());
+  const [userYear, setUserYear] = useState(new Date().getFullYear());
+
 
   useEffect(() => {
     if (!token) return;
@@ -40,24 +42,22 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!token) return;
     axios.get(
-      `http://127.0.0.1:8000/api/services/services-monthly/?year=${year}&month=${serviceMonth}`,
+      `http://127.0.0.1:8000/api/services/services-monthly/?year=${serviceYear}&month=${serviceMonth}`,
       { headers: { Authorization: `Token ${token}` } }
     ).then(res => setServicesChart(res.data))
     .catch(err => console.error("Services chart error:", err));
-  }, [serviceMonth, year]);
+  }, [serviceMonth, serviceYear]);
 
   useEffect(() => {
     if (!token) return;
     axios.get(
-      `http://127.0.0.1:8000/api/services/users-monthly/?year=${year}&month=${userMonth}`,
+      `http://127.0.0.1:8000/api/services/users-monthly/?year=${userYear}&month=${userMonth}`,
       { headers: {Authorization: `Token ${token}` } }
     ).then(res => setUsersChart(res.data));
-  }, [userMonth, year]);
+  }, [userMonth, userYear]);
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F8FBFB] flex">
-      <main className="flex-1 px-4 py-6 md:px-6 lg:px-10">
-
+    <div dir="rtl" className="px-4 py-6 md:px-6 lg:px-10">
         <h2 className="text-xl font-semibold text-gray-800 mb-6">
           الإحصائيات
         </h2>
@@ -84,26 +84,32 @@ const AdminDashboard = () => {
         {/* ===== Charts ===== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
 
-  <ChartCard
-    title="الخدمات المقبولة خلال شهر"
-    value={(servicesChart.data|| []).reduce((a, b) => a + b, 0)}
-    data={servicesChart.data}
-    labels={servicesChart.labels}
-    month={serviceMonth}
-    onMonthChange={setServiceMonth}
-  />
+          <ChartCard
+            title="الخدمات المقبولة خلال"
+            y="سنة"
+            m="شهر"
+            value={(servicesChart.data|| []).reduce((a, b) => a + b, 0)}
+            data={servicesChart.data}
+            labels={servicesChart.labels}
+            month={serviceMonth}
+            year={serviceYear}
+            onMonthChange={setServiceMonth}
+            onYearChange={setServiceYear}
+          />
 
-  <ChartCard
-    title="المستخدمين الجدد خلال شهر"
-    value={(usersChart.data|| []).reduce((a, b) => a + b, 0)}
-    data={usersChart.data}
-    labels={usersChart.labels}
-    month={userMonth}
-    onMonthChange={setUserMonth}
-  />
-
-</div>
-      </main>
+          <ChartCard
+            title="المستخدمين الجدد خلال"
+            y="سنة"
+            m="شهر"
+            value={(usersChart.data|| []).reduce((a, b) => a + b, 0)}
+            data={usersChart.data}
+            labels={usersChart.labels}
+            month={userMonth}
+            year={userYear}
+            onMonthChange={setUserMonth}
+            onYearChange={setUserYear}
+          />
+        </div>
     </div>
   );
 };

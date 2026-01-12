@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import {PencilIcon} from "../component/icons"
+import { PencilIcon } from "../component/icons"
 import default_img from "../../public/media/user_profile/default.png";
-import {ToastMess} from "../component/toast"
+import { ToastMess } from "../component/toast"
 import { motion } from 'framer-motion';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from "../context/AuthContext";
+
 
 function Profile() {
   const BASE_URL = "http://127.0.0.1:8000/api/users/";
@@ -17,27 +19,28 @@ function Profile() {
   const [previewImage, setPreviewImage] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const usernameRef = useRef(null);
-  const emailRef = useRef(null);
+  // const emailRef = useRef(null);
   const phoneRef = useRef(null);
-  const [user, setUser] = useState(null);
-  const navigate= useNavigate();
+  const navigate = useNavigate();
+  const { token, setUser, logout } = useAuth();
+
 
   useEffect(() => {
-  if (activeField === 'username' && usernameRef.current) {
-    usernameRef.current.focus();
-  }
-  if (activeField === 'email' && emailRef.current) {
-    emailRef.current.focus();
-  }
-  if (activeField === 'phone' && phoneRef.current) {
-    phoneRef.current.focus();
-  }
-}, [activeField]);
+    if (activeField === 'username' && usernameRef.current) {
+      usernameRef.current.focus();
+    }
+    // if (activeField === 'email' && emailRef.current) {
+    //   emailRef.current.focus();
+    // }
+    if (activeField === 'phone' && phoneRef.current) {
+      phoneRef.current.focus();
+    }
+  }, [activeField]);
 
 
   const [info, setInfo] = useState({
     username: '',
-    email: '',
+    // email: '',
     phone: '',
     profile_image: '',
     password: ''
@@ -69,7 +72,7 @@ function Profile() {
 
     const infoChanged =
       updatedInfo.username !== originalInfo.username ||
-      updatedInfo.email !== originalInfo.email ||
+      // updatedInfo.email !== originalInfo.email ||
       updatedInfo.phone !== originalInfo.phone ||
       !sameImage;
 
@@ -85,12 +88,12 @@ function Profile() {
   useEffect(() => {
     axios
       .get(`${BASE_URL}user/`, {
-        headers: { Authorization: `Token ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Token ${token}` }
       })
       .then((res) => {
         const userData = {
           username: res.data.username || '',
-          email: res.data.email || '',
+          // email: res.data.email || '',
           phone: res.data.phone || '',
           profile_image: res.data.profile_image || '',
           password: ''
@@ -149,12 +152,12 @@ function Profile() {
       errors.push("الاسم مطلوب");
     }
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!info.email.trim()) {
-      errors.push("البريد الإلكتروني مطلوب");
-    } else if (!emailRegex.test(info.email)) {
-      errors.push("صيغة البريد الإلكتروني غير صحيحة");
-    }
+    // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // if (!info.email.trim()) {
+    //   errors.push("البريد الإلكتروني مطلوب");
+    // } else if (!emailRegex.test(info.email)) {
+    //   errors.push("صيغة البريد الإلكتروني غير صحيحة");
+    // }
 
     const phoneRegex = /^7\d{8}$/;
     if (!info.phone.trim()) {
@@ -175,7 +178,7 @@ function Profile() {
     }
     const data = new FormData();
     data.append('username', info.username);
-    data.append('email', info.email);
+    // data.append('email', info.email);
     data.append('phone', info.phone);
 
     if (info.profile_image && typeof info.profile_image !== 'string') {
@@ -199,7 +202,7 @@ function Profile() {
       .then((res) => {
         const updatedInfo = {
           username: res.data.username || info.username,
-          email: res.data.email || info.email,
+          // email: res.data.email || info.email,
           phone: res.data.phone || info.phone,
           profile_image: res.data.profile_image || info.profile_image,
           password: ''
@@ -212,7 +215,7 @@ function Profile() {
         setHasChanges(false);
         window.location.reload();
       })
-     .catch(err => {
+      .catch(err => {
         const error = err.response?.data || {};
         console.log("Server error:", error);
         const formatted = {};
@@ -223,7 +226,7 @@ function Profile() {
 
           if (msg) {
             // ✅ عرض التوست فقط للأخطاء الخاصة بـ الاسم، الإيميل، ورقم الهاتف
-            if (['username', 'email', 'phone'].includes(key)) {
+            if (['username','phone'].includes(key)) {
               toast.error(msg);
             }
 
@@ -276,34 +279,30 @@ function Profile() {
 
   //logout
   const handleLogout = () => {
-    localStorage.removeItem("user");   // امسح بيانات المستخدم
-    localStorage.removeItem("token");  // امسح التوكن
-    setUser(null);  
-      setTimeout(() => {
-        navigate("/");
-      }, 1800);  // ← توجيه لصفحة الدخول
-      toast.success("تم تسجيل الخروج");
+    logout();
+    toast.success("تم تسجيل الخروج");
+    navigate("/");
   };
 
   //delete confirm message
   const confirmDeleteAccount = () => {
-      let toastId; // declare variable
+    let toastId; // declare variable
 
-      toastId = toast(
-        ({ closeToast }) => (
-          <ToastMess
-            closeToast={closeToast}
-            toastId={toastId} // now this will be set correctly
-            handleDeleteAccount={handleDeleteAccount}
-          />
-        ),
-        {
-          autoClose: false,
-          closeOnClick: false,
-          draggable: false,
-          position: "top-center",
-        }
-      );
+    toastId = toast(
+      ({ closeToast }) => (
+        <ToastMess
+          closeToast={closeToast}
+          toastId={toastId} // now this will be set correctly
+          handleDeleteAccount={handleDeleteAccount}
+        />
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        position: "top-center",
+      }
+    );
   };
 
   //delete account
@@ -314,7 +313,7 @@ function Profile() {
       });
       localStorage.removeItem("user");   // امسح بيانات المستخدم
       localStorage.removeItem("token");  // امسح التوكن
-      setUser(null);  
+      setUser(null);
       navigate("/");
     } catch (err) {
       toast.error("حدث خطأ أثناء حذف الحساب");
@@ -322,25 +321,25 @@ function Profile() {
   };
 
   const fields = [
-    { 
-      name: "username", 
-      label: "الاسم", 
-      ref: usernameRef 
+    {
+      name: "username",
+      label: "الاسم",
+      ref: usernameRef
     },
-    { 
-      name: "email", 
-      label: "عنوان البريد الالكتروني", 
-      ref: emailRef 
-    },
-    { 
-      name: "phone", 
-      label: "رقم الهاتف", 
-      ref: phoneRef 
+    // {
+    //   name: "email",
+    //   label: "عنوان البريد الالكتروني",
+    //   ref: emailRef
+    // },
+    {
+      name: "phone",
+      label: "رقم الهاتف",
+      ref: phoneRef
     },
   ];
   return (
     <div dir='ltr' className='bg-secondary-50 flex flex-col gap-6 justify-between items-end w-full px-20 pt-10 pb-5 font-["Montserrat-Arabic"] font-light text-[15px]'>
-      <h3 className='text-primary mb-5 text-xl font-normal'>الملف الشخصي</h3>
+      <h3 className='text-primary mb-8 text-xl font-normal'>الملف الشخصي</h3>
 
       <form onSubmit={(e) => { e.preventDefault(); updateProfile(false); }} className='w-full flex flex-col gap-20'>
         <div dir='rtl' className='flex justify-between items-center w-full'>
@@ -366,9 +365,8 @@ function Profile() {
                 <label className='w-80 border-l border-gray-200 py-6'>{label}</label>
                 <input
                   ref={ref}
-                  className={`flex-1 py-6 pr-4 focus:outline-none ${
-                    activeField === name ? "text-gray-900" : "text-gray-700"
-                  }`}
+                  className={`flex-1 py-6 pr-4 focus:outline-none ${activeField === name ? "text-gray-900" : "text-gray-700"
+                    }`}
                   name={name}
                   disabled={activeField !== name}
                   value={info[name] || ""}
@@ -417,13 +415,13 @@ function Profile() {
           >
             <h4 className="text-lg text-primary">تغيير كلمة المرور</h4>
             <form onSubmit={(e) => e.preventDefault()} className='flex flex-col'>
-              <input type="password" name="old_password" placeholder="كلمة المرور الحالية" value={passwords.old_password} onChange={handleChange} className="w-full px-2 py-3 border border-gray-300 rounded-lg mt-4 focus:outline-none"/>
+              <input type="password" name="old_password" placeholder="كلمة المرور الحالية" value={passwords.old_password} onChange={handleChange} className="w-full px-2 py-3 border border-gray-300 rounded-lg mt-4 focus:outline-none" />
               {validationErrors.old_password && <p className="text-red-500 text-xs mt-1">{validationErrors.old_password}</p>}
 
-              <input type="password" name="new_password" placeholder="كلمة المرور الجديدة" value={passwords.new_password} onChange={handleChange} className="w-full px-2 py-3 border border-gray-300 rounded-lg mt-4 focus:outline-none"/>
+              <input type="password" name="new_password" placeholder="كلمة المرور الجديدة" value={passwords.new_password} onChange={handleChange} className="w-full px-2 py-3 border border-gray-300 rounded-lg mt-4 focus:outline-none" />
               {validationErrors.new_password && <p className="text-red-500 text-xs mt-1">{validationErrors.new_password}</p>}
 
-              <input type="password" name="confirm_password" placeholder="تأكيد كلمة المرور الجديدة" value={passwords.confirm_password || ''} onChange={handleChange} className="w-full px-2 py-3 border border-gray-300 rounded-lg mt-4 focus:outline-none"/>
+              <input type="password" name="confirm_password" placeholder="تأكيد كلمة المرور الجديدة" value={passwords.confirm_password || ''} onChange={handleChange} className="w-full px-2 py-3 border border-gray-300 rounded-lg mt-4 focus:outline-none" />
               {validationErrors.confirm_password && <p className="text-red-500 text-xs mt-1">{validationErrors.confirm_password}</p>}
             </form>
             <div className="flex justify-end gap-4">
@@ -434,7 +432,7 @@ function Profile() {
         </motion.div>
       )}
 
-      <div dir='rtl' className='flex gap-10 self-center mt-6'>
+      <div dir='rtl' className='flex gap-10 self-center mt-20'>
         <button onClick={handleLogout} className='rounded-lg text-white bg-primary px-5 py-3 cursor-pointer'>تسجيل الخروج</button>
         <button onClick={confirmDeleteAccount} className='rounded-lg text-white bg-red-600 px-5 py-3 cursor-pointer'>حذف الحساب</button>
       </div>

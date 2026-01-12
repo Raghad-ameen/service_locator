@@ -257,7 +257,7 @@ const Categories = () => {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none"
                 />
               </div>
-              {formErrors.name && <p className="text-red-500 text-xs -mt-4 mr-14">{formErrors.name}</p>}
+              {formErrors.name && <p className="text-red-500 text-xs -mt-4 mr-1">{formErrors.name}</p>}
               <div className='flex flex-col gap-2'>
                 <label className="text-gray-600 font-light">الوصف</label>
                 <textarea

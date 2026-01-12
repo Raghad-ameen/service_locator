@@ -12,6 +12,7 @@ from .serializers import UserListSerializer, SuggestionSerializer , CommentSeria
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from django.db.models import Avg, Count
+from notifications.services import send_notification
 
 
 
@@ -44,7 +45,7 @@ class LoginView(APIView):
             return Response({
                 'token': token.key,
                 'username': user.username,
-                'email': user.email,
+                # 'email': user.email,
                 'phone': user.phone,
                 'profile_image': user.profile_image.url if user.profile_image else None,
                 'user_type': user.user_type,
@@ -82,6 +83,26 @@ def create_suggestion(request):
 
     return Response({"detail": "تم إرسال الاقتراح بنجاح"}, status=201)
 
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_suggestion(request, pk):
+    try:
+        suggestion = Suggestion.objects.get(
+            pk=pk,
+            service__owner=request.user  # 🔒 تأكيد أن المزوّد هو المالك
+        )
+    except Suggestion.DoesNotExist:
+        return Response(
+            {"detail": "الاقتراح غير موجود"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    suggestion.delete()
+    return Response(
+        {"detail": "تم حذف الاقتراح بنجاح"},
+        status=status.HTTP_204_NO_CONTENT
+    )
+
 # عرض الاقتراحات الخاصة بالمزوّد
 class SuggestionListView(generics.ListAPIView):
     serializer_class = SuggestionSerializer
@@ -106,6 +127,11 @@ class SuggestionReplyView(APIView):
         reply = request.data.get("response")
         suggestion.response = reply
         suggestion.save()
+        
+        send_notification(
+            user_id=suggestion.user.id,
+            message={reply}
+        )
 
         return Response({"detail": "تم حفظ الرد بنجاح"})
 
@@ -201,7 +227,7 @@ def current_user(request):
     return Response({
         'id': user.id,
         'username': user.username,
-        'email': user.email,
+        # 'email': user.email,
         'phone': user.phone,
         'profile_image': request.build_absolute_uri(user.profile_image.url) if user.profile_image else None,
         'user_type': user.user_type,
@@ -222,7 +248,7 @@ def update_user(request):
     confirm_password = data.get('confirm_password')
     # ✅ Update profile info
     user.username = data.get('username', user.username)
-    user.email = data.get('email', user.email)
+    # user.email = data.get('email', user.email)
     user.phone = data.get('phone', user.phone)
 
     if 'profile_image' in request.FILES:
@@ -232,8 +258,8 @@ def update_user(request):
     if CustomUser.objects.exclude(id=user.id).filter(username=data.get('username')).exists():
         errors['username'] = 'اسم المستخدم مستخدم بالفعل'
 
-    if CustomUser.objects.exclude(id=user.id).filter(email=data.get('email')).exists():
-        errors['email'] = 'البريد الإلكتروني مستخدم بالفعل'
+    # if CustomUser.objects.exclude(id=user.id).filter(email=data.get('email')).exists():
+    #     errors['email'] = 'البريد الإلكتروني مستخدم بالفعل'
 
     if CustomUser.objects.exclude(id=user.id).filter(phone=data.get('phone')).exists():
         errors['phone'] = 'رقم الهاتف مستخدم بالفعل'
@@ -259,7 +285,7 @@ def update_user(request):
     return Response({
         'id': user.id,
         'username': user.username,
-        'email': user.email,
+        # 'email': user.email,
         'phone': user.phone,
         'profile_image': request.build_absolute_uri(user.profile_image.url) if user.profile_image else None,
         'user_type': user.user_type,
@@ -298,7 +324,7 @@ def search_users(request):
         # ✅ بحث شامل بعدة حقول
         users = CustomUser.objects.filter(
             Q(username__icontains=query) |
-            Q(email__icontains=query) |
+            # Q(email__icontains=query) |
             Q(phone__icontains=query) |
             Q(user_type__icontains=query)#المفروض بالعربي
         )

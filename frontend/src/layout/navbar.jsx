@@ -161,7 +161,7 @@ const Navbar = ({ activeModal, setActiveModal }) => {
             {user && (
               <div onClick={() => navigate('/Userprofile')} className="flex cursor-pointer items-center gap-4 p-1 w-fit h-fit">
                 <div className="w-10 h-10">
-                  <img src={user.profile_image} onError={(e) => { e.target.src = default_img }} alt="profile" className="w-10 h-10 object-cover rounded-full" />
+                  <img src={user.profile_image}  alt="profile" className="w-10 h-10 object-cover rounded-full" />
                 </div>
                 <div className="flex flex-col gap-1 w-25">
                   <span>{user.username}</span>

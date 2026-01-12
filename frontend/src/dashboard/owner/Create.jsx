@@ -107,6 +107,14 @@ const Create = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const isFormValid = validateForm();
+    const isWorkHoursValid = workHoursRef.current?.validate();
+
+    if (!isFormValid || !isWorkHoursValid) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     const body = {
       category,
       title,
@@ -339,8 +347,8 @@ const Create = () => {
           <button type='submit' className='rounded-lg text-base border border-primary-600 text-primary-600 self-center px-8 py-2 cursor-pointer'>
             اضف الخدمة
           </button>
-        </form >
-      </div >
+        </form>
+      </div>
       <ToastContainer
         position="top-center"
         autoClose={false}
@@ -353,7 +361,7 @@ const Create = () => {
         draggable
         pauseOnHover
       />
-    </div >
+    </div>
   )
 }
 

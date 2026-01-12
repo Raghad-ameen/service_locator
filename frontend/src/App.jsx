@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import './App.css';
-//pages
+
 import MyMap from "./component/MyMap";
 import { useAuth } from './context/AuthContext';
 import { ToastContainer } from "react-toastify";
@@ -35,6 +35,7 @@ import ServicesList from './dashboard/admin/services_list';
 import Categories from './dashboard/admin/categories';
 import ManageAdv from './dashboard/admin/manageAdv';
 import "leaflet/dist/leaflet.css";
+
 function App() {
   const [activeModal, setActiveModal] = useState(null);
   const { user } = useAuth();

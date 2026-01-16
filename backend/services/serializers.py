@@ -1,10 +1,9 @@
 from rest_framework import serializers
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from .models import Service, Category, WorkSchedule, Product, ProductImage, Ad, AdPackage, AdStatus, Favorite
+from users.models import Suggestion 
 from django.utils import timezone
-from datetime import timedelta
-from datetime import date
+from datetime import timedelta, date
+from django.db.models import Avg
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,13 +30,20 @@ class ServiceSerializer(serializers.ModelSerializer):
     )
     owner = serializers.ReadOnlyField(source='owner.username')
     owner_image = serializers.ImageField(source='owner.profile_image', read_only=True)
+    average_rating = serializers.SerializerMethodField()
+    reviews_count = serializers.SerializerMethodField()
     class Meta:
         model = Service
         fields = [
             'id', 'owner', 'owner_image', 'title', 'description', 'category', 'category_id',
-            'cover_image', 'logo_image', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at','latitude','longitude'        
+            'cover_image', 'logo_image', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at','latitude','longitude', "average_rating",
+            "reviews_count",        
         ]
-    
+    def get_average_rating(self, obj):
+        return obj.reviews.aggregate(avg=Avg("rating"))["avg"] or 0
+
+    def get_reviews_count(self, obj):
+        return obj.reviews.count()
     def get_products(self, obj):
         products = Product.objects.filter(service=obj.id)
         return ProductSerializer(products, many=True).data
@@ -128,6 +134,8 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         return instance
+
+#============== advertisment =======================
 class AdPackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdPackage
@@ -205,6 +213,7 @@ class AdminAdUpdateSerializer(serializers.ModelSerializer):
         model = Ad
         fields = ['status']
 
+#================= favorite ==============================
 class FavoriteServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
@@ -216,3 +225,11 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ["id", "service", "created_at"]
+
+class SuggestionSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.username", read_only=True)
+    user_image = serializers.ImageField(source="user.profile_image", read_only=True)
+
+    class Meta:
+        model = Suggestion
+        fields = ["id", "user_name", "user_image", "message", "response", "created_at"]

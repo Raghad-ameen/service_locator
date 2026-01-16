@@ -30,7 +30,7 @@ const Create = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [logoImage, setLogoImage] = useState(null);
   const [coords, setCoords] = useState(null);
-
+  const [mapBounds, setMapBounds] = useState(null);
   const token = localStorage.getItem('token');
 
   // جلب أنواع الخدمات
@@ -63,6 +63,10 @@ const Create = () => {
     if (!description.trim()) newErrors.description = "الوصف مطلوب";
 
     if (!category) newErrors.category = "الرجاء اختيار نوع الخدمة";
+
+    if (!coords) {
+      newErrors.coords = "الرجاء تحديد موقع الخدمة على الخريطة";
+    }
 
     if (!phone.trim()) {
       newErrors.phone = "رقم الهاتف مطلوب";
@@ -211,6 +215,37 @@ const Create = () => {
       alert("❌ " + JSON.stringify(err.response?.data));
     }
   };
+
+  const directorates = {
+    "صنعاء": {
+      bounds: [
+        [15.30, 44.10],
+        [15.45, 44.30],
+      ],
+    },
+    "الأمانة": {
+      bounds: [
+        [15.35, 44.15],
+        [15.50, 44.35],
+      ],
+    },
+  };
+
+  const streets = {
+    "شارع الزبيري": {
+      bounds: [
+        [15.36, 44.19],
+        [15.38, 44.21],
+      ],
+    },
+    "شارع حدة": {
+      bounds: [
+        [15.33, 44.18],
+        [15.35, 44.22],
+      ],
+    },
+  };
+
   return (
     <div className='px-50 pt-10 pb-5 font-["Montserrat-Arabic"] font-light text-[14px] w-full'>
       <div dir='rtl' className='flex gap-5'>
@@ -287,38 +322,50 @@ const Create = () => {
 
             </div>
             {/* location */}
-            {/* <div className='flex gap-8'>
+            <div className='flex gap-8'>
               <div className='flex flex-1 justify-between border-b border-gray-300 pb-5'>
                 <label htmlFor="service" className='text-gray-500'>موقع الخدمة حسب المديرية</label>
                 <select
-                  name="service"
-                  value={''}
-                  onChange={''}
-                  className=''
-                  >
-                  <option value=""/>
-                  <option value={''}></option>
-                  <option value={''}></option>
-                  <option value={''}></option>
+                  value={directorate}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setDirectorate(value);
+                    setStreet("");
+                    setMapBounds(directorates[value]?.bounds || null);
+                  }}
+                  className="border p-2 w-full mb-4"
+                >
+                  <option value="">اختر المديرية</option>
+                  {Object.keys(directorates).map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
                 </select>
+
               </div>
               <div className='flex flex-1 justify-between border-b border-gray-300 pb-5'>
                 <label htmlFor="service" className='text-gray-500'>موقع الخدمة حسب الشارع</label>
                 <select
-                  name="service"
-                  value={''}
-                  onChange={''}
-                  className=''
-                  >
-                  <option value=""/>
-                  <option value={''}></option>
-                  <option value={''}></option>
-                  <option value={''}></option>
+                  value={street}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setStreet(value);
+                    setMapBounds(streets[value]?.bounds || null);
+                  }}
+                  className="border p-2 w-full mb-4"
+                >
+                  <option value="">اختر الشارع</option>
+                  {Object.keys(streets).map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
                 </select>
               </div>
-            </div> */}
+            </div>
             <h3 className='font-normal'>لتحديد موقع خدمتك بشكل أدق استخدم الخريطة</h3>
-            <div><MyMap value={coords} onChange={setCoords} /></div>
+            <div><MyMap value={coords} onChange={setCoords} bounds={mapBounds} /></div>
+            {errors.coords && (
+              <p className="text-red-500 text-sm mt-2">{errors.coords}</p>
+            )}
+
           </fieldset>
           {/* contact info */}
           <fieldset className='flex flex-col justify-center w-full mb-10'>

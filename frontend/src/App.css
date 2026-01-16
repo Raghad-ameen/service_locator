@@ -103,4 +103,40 @@ input[type="date"] {
 
 .leaflet-container { z-index: 0; /* يخلي الخريطة تحت */ }
 
+.slide-progress {
+  animation: slideProgress 4s linear forwards;
+}
+.number-progress {
+  animation: numProgress 4s linear forwards;
+}
+@keyframes slideProgress {
+  0% {
+    width: 0%;
+  }
+   40% {
+    width: 50%;
+    scale: 1;
+  }
+  90% {
+    width: 50%;
+    scale: 1; /* Hold here from 40% to 80% → 2s of pause */
+  }
+  100%{
+    scale: 0;
+  }
+}
 
+@keyframes numProgress {
+  0% {
+    width: 3rem;
+  }
+  40% {
+    width: 4rem;
+  }
+  90% {
+    width: 4rem;
+  }
+  100%{
+    width: 3rem;
+  }
+}

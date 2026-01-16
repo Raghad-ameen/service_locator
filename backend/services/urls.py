@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
-from .views import (ServiceViewSet, CategoryViewSet, WorkScheduleViewSet, ProductViewSet,DeleteProductImageAPIView, ProviderAdViewSet, ProviderAdPackageViewSet, AdminAdViewSet, AdminAdPackageViewSet, PublicAdViewSet, OwnerDashboard, PublicProductViewSet, AdminDashboardStatsAPIView, AdminMonthlyServicesStatsAPIView, AdminMonthlyUsersStatsAPIView, FavoriteListView, FavoriteToggleView)
+from .views import (ServiceViewSet, CategoryViewSet, WorkScheduleViewSet, ProductViewSet,DeleteProductImageAPIView, ProviderAdViewSet, ProviderAdPackageViewSet, AdminAdViewSet, AdminAdPackageViewSet, PublicAdViewSet, PublicProductViewSet, AdminDashboardStatsAPIView, AdminMonthlyServicesStatsAPIView, AdminMonthlyUsersStatsAPIView, FavoriteListView, FavoriteToggleView, owner_dashboard)
 router = DefaultRouter()
 router.register(r'service', ServiceViewSet, basename='service')
 router.register(r'categories', CategoryViewSet)
@@ -19,11 +19,11 @@ router.register(r'public/products', PublicProductViewSet, basename='public-produ
 
 urlpatterns = [
     path("delete-image/<int:image_id>/", DeleteProductImageAPIView.as_view()),
-    path('owner-dashboard/', OwnerDashboard.as_view(), name='owner-dashboard'),
     path("dashboard/stats/", AdminDashboardStatsAPIView.as_view()),
     path("services-monthly/", AdminMonthlyServicesStatsAPIView.as_view(),),
     path("users-monthly/", AdminMonthlyUsersStatsAPIView.as_view(),),
     path("favorites/", FavoriteListView.as_view(), name="favorites-list"),
-    path("favorites/<int:service_id>/toggle/", FavoriteToggleView.as_view(), name="toggle-favorite",)
+    path("favorites/<int:service_id>/toggle/", FavoriteToggleView.as_view(), name="toggle-favorite",),
+    path('owner-dashboard/', owner_dashboard, name='owner-dashboard'),
 ]
 urlpatterns += router.urls

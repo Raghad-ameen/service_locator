@@ -1,20 +1,19 @@
 from rest_framework import viewsets, status, permissions, filters
 from rest_framework.views import APIView
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus, Favorite
-from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer, FavoriteSerializer
+from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer, FavoriteSerializer, SuggestionSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
-from users.models import Suggestion, CustomUser
+from users.models import CustomUser
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from notifications.services import send_notification
-from datetime import timedelta
-from rest_framework.permissions import IsAdminUser
-from datetime import date
+from datetime import timedelta, date
 from calendar import monthrange
 from django.shortcuts import get_object_or_404  
+from django.db.models import Avg, Count
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -31,7 +30,11 @@ class ServiceViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-
+        
+        qs = Service.objects.all().annotate(
+            average_rating=Avg('reviews__rating'),
+            reviews_count=Count('reviews')
+        )
         # إذا المستخدم غير مسجل دخول → نرجع خدمات عامة فقط
         if not user.is_authenticated:
             return Service.objects.filter(status="approved")
@@ -68,7 +71,15 @@ class ServiceViewSet(viewsets.ModelViewSet):
         if service.owner != self.request.user and self.request.user.user_type != "admin":
             raise permissions.PermissionDenied("لا تملك صلاحية تعديل هذه الخدمة")
         serializer.save()
-      
+    
+    @action(detail=True, methods=['post'])
+    def add_visit(self, request, pk=None):
+            service = self.get_object()
+            service.visits_count += 1
+            service.save(update_fields=["visits_count"])
+            return Response({"visits_count": service.visits_count})
+
+
     # الموافقة على الخدمة
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -347,35 +358,41 @@ class ProviderAdPackageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AdPackage.objects.filter(is_active=True)
 
 #---------------------owner dashboard----------------------
-class OwnerDashboard(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        service = Service.objects.filter(owner=request.user).first()
-        if not service:
-            return Response({"detail": "لا توجد خدمة مرتبطة بهذا المستخدم"}, status=404)
-
-        visits = service.visits_count
-        likes = service.likes_count
-        products_count = Product.objects.filter(service=service).count()
-
-        latest_products = Product.objects.filter(service=service).order_by('-created_at')[:5]
-        latest_suggestions = Suggestion.objects.filter(service=service).order_by('-created_at')[:5]
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def owner_dashboard(request):
+    user = request.user
+    #جلب الخدمة المعتمدة لصاحب الخدمة 
+    service = Service.objects.filter(owner=user, status="approved").first()
+    if not service:
         return Response({
-            "visits": visits,
-            "likes": likes,
-            "products": products_count,
-            "latest_products": [
-                {"name": p.name, "description": p.description, "price": p.price, "img": p.images.first().photo.url if p.images.exists() else ""}
-                for p in latest_products
-            ],
-            "latest_suggestions": [
-                {"name": s.user.get_full_name(), "text": s.message, "img": s.user.profile_image.url if s.user.profile_image else ""}
-                for s in latest_suggestions
-            ]
+            "visits": 0,
+            "likes": 0,
+            "products": 0,
+            "latest_products": [],
+            "latest_suggestions": []
         })
 
+    # الإحصائيات
+    visits_count = service.visits_count
+    likes_count = service.likes_count
+    products_count = service.products.count()
+
+    # آخر المنتجات (استخدم Serializer)
+    latest_products = service.products.order_by('-id')[:5]
+    latest_products_data = ProductSerializer(latest_products, many=True, context={'request': request}).data
+
+    # آخر الاقتراحات (Favorites)
+    latest_suggestions = service.suggestions.order_by('-id')[:5]
+    latest_suggestions_data = SuggestionSerializer(latest_suggestions, many=True, context={'request': request}).data
+
+    return Response({
+        "visits": visits_count,
+        "likes": likes_count,
+        "products": products_count,
+        "latest_products": latest_products_data,
+        "latest_suggestions": latest_suggestions_data
+    })
 #--------------------admin dashboard-----------------------
 class AdminDashboardStatsAPIView(APIView):
     permission_classes = [permissions.IsAdminUser]

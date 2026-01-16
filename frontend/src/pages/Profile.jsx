@@ -22,7 +22,7 @@ function Profile() {
   // const emailRef = useRef(null);
   const phoneRef = useRef(null);
   const navigate = useNavigate();
-  const { token, setUser, logout } = useAuth();
+  const { token, setUser, logout, updateUser } = useAuth();
 
 
   useEffect(() => {
@@ -213,6 +213,7 @@ function Profile() {
         setValidationErrors({});
         if (shouldClosePopup) setShowPasswordPopup(false);
         setHasChanges(false);
+        updateUser(updatedInfo);
         window.location.reload();
       })
       .catch(err => {

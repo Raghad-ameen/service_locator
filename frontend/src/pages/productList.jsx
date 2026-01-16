@@ -55,7 +55,7 @@ const ProductList = () => {
                 />
             </div>
 
-            {/* 🔥 dynamic grid */}
+            {/* dynamic grid */}
             {(() => {
                 const cols = Math.min(previewImages.length, 4);
                 const colClass = {

@@ -188,16 +188,16 @@ const OwnerNav = () => {
 
             {/* icon and user info */}
             <div dir="rtl" className="flex items-center gap-6">
-              <div className="flex gap-4 w-fit border-l border-gray-300 pl-5 py-1">
-                {/* ❤️ المفضلة */}
+              <div className="flex gap-4 items-center w-fit border-l border-gray-300 pl-5 py-1">
+                {/* المفضلة */}
                 <button
                   ref={favBtnRef}
                   onClick={toggleFavorites}
                   className="relative"
                 >
-                  <HeartIcon className="w-5 h-5 cursor-pointer" />
+                  <HeartIcon className="w-5 h-5.5 cursor-pointer" />
                   {favoriteCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] px-1.5 py-0.5 rounded-full">
                       {favoriteCount}
                     </span>
                   )}

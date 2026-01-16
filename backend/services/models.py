@@ -17,7 +17,6 @@ class Service(models.Model):
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='services')
     visits_count = models.PositiveIntegerField(default=0)
-    likes_count = models.PositiveIntegerField(default=0)
     # الصور
     cover_image = models.ImageField(upload_to='service_profile/', max_length=255, blank=True, null=True)  # مطلوب
     logo_image = models.ImageField(upload_to='service_logos/', max_length=255, blank=True, null=True)  # اختياري
@@ -43,6 +42,10 @@ class Service(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.title
+    @property
+    def likes_count(self):
+        # احسب عدد الإعجابات من جدول Favorite
+        return self.favorited_by.count()
 
 class WorkSchedule(models.Model):
     DAYS = [

@@ -13,7 +13,7 @@ import FavoriteDropdown from "../component/favoriteDropdown";
 import { useRef, useState, useEffect } from "react";
 
 const Navbar = ({ activeModal, setActiveModal }) => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser} = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -102,19 +102,18 @@ const Navbar = ({ activeModal, setActiveModal }) => {
     };
   }, [showFavorites]);
 
-  useEffect(() => {
-    if (!token) return;
+  // useEffect(() => {
+  //   if (!token) return;
 
-    fetch("http://127.0.0.1:8000/api/users/user/", {
-      headers: { Authorization: `Token ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUser(data);
-        setHasService(data.has_service);
-      })
-      .catch(() => { });
-  }, [token]);
+  //   fetch("http://127.0.0.1:8000/api/users/user/", {
+  //     headers: { Authorization: `Token ${token}` },
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       updateUser(data);
+  //     })
+  //     .catch(() => { });
+  // }, [token]);
 
   return (
     <nav className=" fixed z-50 w-full rounded-b-3xl bg-white border-b border-gray-200 shadow-md shadow-primary/5 font-['Montserrat-Arabic'] text-sm text-secondary-900 py-4 px-20">
@@ -134,17 +133,17 @@ const Navbar = ({ activeModal, setActiveModal }) => {
         {/*icon and user info*/}
         {user && (
           <div dir="rtl" className="flex items-center gap-6">
-            <div className="flex gap-4 w-fit border-l border-gray-300 pl-5 py-1">
-              {/* ❤️ المفضلة */}
+            <div className="flex gap-4 items-center w-fit border-l border-gray-300 pl-5 py-1">
+              {/* المفضلة */}
               <button
                 ref={favBtnRef}
                 type="button"
                 onClick={toggleFavorites}
                 className="relative"
               >
-                <HeartIcon className="w-5 h-5 cursor-pointer" />
+                <HeartIcon className="w-5 h-5.5 cursor-pointer" />
                 {favoriteCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] px-1.5 py-0.5 rounded-full">
                     {favoriteCount}
                   </span>
                 )}
@@ -161,7 +160,7 @@ const Navbar = ({ activeModal, setActiveModal }) => {
             {user && (
               <div onClick={() => navigate('/Userprofile')} className="flex cursor-pointer items-center gap-4 p-1 w-fit h-fit">
                 <div className="w-10 h-10">
-                  <img src={user.profile_image}  alt="profile" className="w-10 h-10 object-cover rounded-full" />
+                  <img src={user.profile_image || default_img}  alt="profile" className="w-10 h-10 object-cover rounded-full" />
                 </div>
                 <div className="flex flex-col gap-1 w-25">
                   <span>{user.username}</span>

@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { EyeIcon, HeartIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
 
 ChartJS.register(
   LineElement,
@@ -123,8 +124,6 @@ function ChartCard({ title, value, data = [], labels, month, year, onMonthChange
   );
 }
 
-
-
 /* ================= Components ================= */
 
 function StatCard({ title, value, type }) {
@@ -164,33 +163,21 @@ function StatCard({ title, value, type }) {
       bar: "bg-green-300",
       iconBg: "bg-green-50",
       icon: (
-        <svg width="26" height="26" fill="none" stroke="#34D399" strokeWidth="2">
-          <path d="M12 2l9 5-9 5-9-5 9-5z" />
-          <path d="M3 12l9 5 9-5" />
-          <path d="M3 17l9 5 9-5" />
-        </svg>
+        <EyeIcon className="h-10 w-7 text-primary" />
       ),
     },
     products: {
-      bar: "bg-green-300",
-      iconBg: "bg-green-50",
+      bar: "bg-yellow-300",
+      iconBg: "bg-yellow-50",
       icon: (
-        <svg width="26" height="26" fill="none" stroke="#34D399" strokeWidth="2">
-          <path d="M12 2l9 5-9 5-9-5 9-5z" />
-          <path d="M3 12l9 5 9-5" />
-          <path d="M3 17l9 5 9-5" />
-        </svg>
+        <Square3Stack3DIcon className="h-10 w-7 text-yellow-300"/>
       ),
     },
     likes: {
-      bar: "bg-green-300",
-      iconBg: "bg-green-50",
+      bar: "bg-red-300",
+      iconBg: "bg-red-50",
       icon: (
-        <svg width="26" height="26" fill="none" stroke="#34D399" strokeWidth="2">
-          <path d="M12 2l9 5-9 5-9-5 9-5z" />
-          <path d="M3 12l9 5 9-5" />
-          <path d="M3 17l9 5 9-5" />
-        </svg>
+        <HeartIcon className="h-10 w-7 text-red-300"/>
       ),
     },
   };
@@ -213,15 +200,13 @@ function StatCard({ title, value, type }) {
   );
 }
 
-
-
-function ProductItem({ name, desc, price, image }) {
+function ProductItem({ name, desc, price, image, onclick }) {
   return (
     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 px-5 py-4">
 
       {/* الصورة + النص */}
       <div className="flex items-center gap-3">
-        <img src={image} alt="" className="w-8 h-8 rounded-full" />
+        <img src={image} onClick={onclick} alt="" className="w-8 h-8 rounded-full cursor-pointer" />
 
         <div className="text-right">
           <p className="text-sm font-medium text-gray-800">

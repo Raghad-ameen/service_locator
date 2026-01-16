@@ -64,7 +64,7 @@ const NotificationsDropdown = () => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative -mb-1.5" ref={dropdownRef}>
       <button
         onClick={handleToggle}
         className="relative cursor-pointer"

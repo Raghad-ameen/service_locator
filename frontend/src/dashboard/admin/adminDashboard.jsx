@@ -58,7 +58,7 @@ const AdminDashboard = () => {
 
   return (
     <div dir="rtl" className="px-4 py-6 md:px-6 lg:px-10">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6">
+        <h2 className="text-xl text-gray-800 mb-6">
           الإحصائيات
         </h2>
 

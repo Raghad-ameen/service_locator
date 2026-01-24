@@ -17,7 +17,7 @@ const AddLocation = () => {
       // ➕ إضافة مديرية
       if (directorateName) {
         const res = await axios.post(
-          "http://127.0.0.1:8000/api/services/directorates/",
+          "https://service-locator-9aja.onrender.com/api/services/directorates/",
           { name: directorateName },
           {
             headers: {
@@ -36,7 +36,7 @@ const AddLocation = () => {
       if (streetName && directorateId) {
         console.log("إرسال بيانات الشارع:", { streetName, directorateId }); 
         const res = await axios.post(
-          "http://127.0.0.1:8000/api/services/streets/",
+          "https://service-locator-9aja.onrender.com/api/services/streets/",
           {
             name: streetName,
             directorate_id: directorateId,
@@ -63,7 +63,7 @@ const AddLocation = () => {
   useEffect(() => {
     // جلب المديريات
     axios
-      .get("http://127.0.0.1:8000/api/services/directorates/", {
+      .get("https://service-locator-9aja.onrender.com/api/services/directorates/", {
         headers: { Authorization: `Token ${token}` },
       })
       .then((res) => setDirectorates(res.data))
@@ -71,7 +71,7 @@ const AddLocation = () => {
 
     // جلب الشوارع
     axios
-      .get("http://127.0.0.1:8000/api/services/streets/", {
+      .get("https://service-locator-9aja.onrender.com/api/services/streets/", {
         headers: { Authorization: `Token ${token}` },
       })
       .then((res) => setStreets(res.data))

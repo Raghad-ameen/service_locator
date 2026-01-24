@@ -35,14 +35,14 @@ const Home = () => {
   const { state } = useLocation();
   // ===================== استيراد الاقسام =====================
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/services/categories/")
+    axios.get("https://service-locator-9aja.onrender.com/api/services/categories/")
       .then(res => setCategories(res.data))
       .catch(err => console.error("خطأ في تحميل الأقسام:", err));
   }, []);
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/services/ads/approved/")
+      .get("https://service-locator-9aja.onrender.com/api/services/ads/approved/")
       .then(res => setAds(res.data))
       .catch(err => console.error("خطأ تحميل الإعلانات:", err));
   }, []);

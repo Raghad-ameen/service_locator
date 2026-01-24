@@ -10,7 +10,7 @@ const NotificationsDropdown = () => {
   const fetchNotifications = async () => {
     try {
       const res = await axios.get(
-        "http://127.0.0.1:8000/api/notifications/",
+        "https://service-locator-9aja.onrender.com/api/notifications/",
         {
           headers: {
             Authorization: `Token ${localStorage.getItem("token")}`,
@@ -49,7 +49,7 @@ const NotificationsDropdown = () => {
   const openNotification = async (id) => {
     try {
       await axios.post(
-        `http://127.0.0.1:8000/api/notifications/${id}/open/`,
+        `https://service-locator-9aja.onrender.com/api/notifications/${id}/open/`,
         {},
         {
           headers: {

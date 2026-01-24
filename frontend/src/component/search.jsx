@@ -14,7 +14,7 @@ const Search = () => {
 
     useEffect(() => {
     if (token) {
-        fetch("http://127.0.0.1:8000/api/users/user/", {
+        fetch("https://service-locator-9aja.onrender.com/api/users/user/", {
         headers: {
             Authorization: `Token ${token}`,
         },

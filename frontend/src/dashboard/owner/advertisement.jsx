@@ -102,7 +102,7 @@ const [accounts, setAccounts] = useState([]);
   useEffect(() => {
     const token = localStorage.getItem("token");
     axios
-      .get("http://127.0.0.1:8000/api/services/provider/packages/", {
+      .get("https://service-locator-9aja.onrender.com/api/services/provider/packages/", {
         headers: { Authorization: `Token ${token}` },
       })
       .then((res) => setPackages(res.data))
@@ -113,7 +113,7 @@ const [accounts, setAccounts] = useState([]);
     const token = localStorage.getItem("token");
 
     axios.get(
-      "http://127.0.0.1:8000/api/services/provider/ads/approved/",
+      "https://service-locator-9aja.onrender.com/api/services/provider/ads/approved/",
       {
         headers: {
           Authorization: `Token ${token}`,
@@ -127,7 +127,7 @@ const [accounts, setAccounts] = useState([]);
   }, []);
 useEffect(() => {
   const token = localStorage.getItem("token");
-  axios.get("http://127.0.0.1:8000/api/services/payment-accounts/", {
+  axios.get("https://service-locator-9aja.onrender.com/api/services/payment-accounts/", {
     headers: {
       Authorization: `Token ${token}`
     }
@@ -194,7 +194,7 @@ formData.append("receipt_image", paymentReceipt);
 
 
     await axios.post(
-      "http://127.0.0.1:8000/api/services/provider/ads/",
+      "https://service-locator-9aja.onrender.com/api/services/provider/ads/",
       formData,
       {
         headers: {
@@ -242,7 +242,7 @@ setPaymentReceipt(null);
   const handleDeleteAds = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/services/provider/ads/${id}/`, {
+      await axios.delete(`https://service-locator-9aja.onrender.com/api/services/provider/ads/${id}/`, {
         headers: {
           Authorization: `Token ${token}`,
         },

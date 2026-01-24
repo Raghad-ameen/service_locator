@@ -100,7 +100,7 @@ const OwnerNav = () => {
   //بيانات الخدمة
   useEffect(() => {
     if (token) {
-      fetch("http://127.0.0.1:8000/api/services/service/", {
+      fetch("https://service-locator-9aja.onrender.com/api/services/service/", {
         headers: { Authorization: `Token ${token}` }
       })
         .then(res => res.json())

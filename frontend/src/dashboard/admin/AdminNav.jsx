@@ -99,7 +99,7 @@ const AdminNav = () => {
     if (!token) return;
 
     axios
-      .get("http://127.0.0.1:8000/api/services/service/", {
+      .get("https://service-locator-9aja.onrender.com/api/services/service/", {
         headers: {
           Authorization: `Token ${token}`,
         },
@@ -119,7 +119,7 @@ const AdminNav = () => {
     if (!token) return;
 
     axios
-      .get("http://127.0.0.1:8000/api/services/admin/ads/pending/", {
+      .get("https://service-locator-9aja.onrender.com/api/services/admin/ads/pending/", {
         headers: {
           Authorization: `Token ${token}`,
         },

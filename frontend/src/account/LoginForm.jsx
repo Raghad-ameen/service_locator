@@ -55,7 +55,7 @@ const Login = ({ onClose, onSwitch, onSuccess }) => {
 
     // إرسال البيانات للخادم
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/users/login/", {
+      const res = await fetch("https://service-locator-9aja.onrender.com/api/users/login/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password })

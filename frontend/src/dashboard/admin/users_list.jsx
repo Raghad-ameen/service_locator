@@ -24,7 +24,7 @@ const UserList = () => {
   const fetchCurrentUser = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/users/user/", {
+      const res = await fetch("https://service-locator-9aja.onrender.com/api/users/user/", {
         headers: {
           Authorization: `Token ${token}`,
         },
@@ -64,8 +64,8 @@ const UserList = () => {
       const query = searchTerm.trim();
 
       const url = query
-        ? `http://127.0.0.1:8000/api/users/search-users/?q=${encodeURIComponent(query)}`
-        : `http://127.0.0.1:8000/api/users/users_list/`;
+        ? `https://service-locator-9aja.onrender.com/api/users/search-users/?q=${encodeURIComponent(query)}`
+        : `https://service-locator-9aja.onrender.com/api/users/users_list/`;
 
       try {
         const res = await fetch(url, {
@@ -90,7 +90,7 @@ const UserList = () => {
   const deleteUser = async (userId) => {
     const token = localStorage.getItem("token");
 
-    await fetch(`http://127.0.0.1:8000/api/users/${userId}/delete_user/`, {
+    await fetch(`https://service-locator-9aja.onrender.com/api/users/${userId}/delete_user/`, {
       method: "DELETE",
       headers: {
         Authorization: `Token ${token}`,

@@ -89,7 +89,7 @@ const RegisterForm = ({ onClose, onSwitch, onSuccess }) => {
     if (profileImage) dataToSend.append("profile_image", profileImage);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/users/register/", {
+      const res = await fetch("https://service-locator-9aja.onrender.com/api/users/register/", {
         method: "POST",
         body: dataToSend,
       });

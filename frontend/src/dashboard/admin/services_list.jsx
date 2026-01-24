@@ -27,7 +27,7 @@ const ServicesList = () => {
   const refreshServices = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://127.0.0.1:8000/api/services/service/", {
+      const res = await axios.get("https://service-locator-9aja.onrender.com/api/services/service/", {
         headers: { Authorization: `Token ${token}` }
       });
       setServices(res.data);
@@ -42,7 +42,7 @@ const ServicesList = () => {
 //تحديث حالة الخدمة لمقبولة
   const approveService = async (id) => {
     const token = localStorage.getItem("token");
-    await axios.post(`http://127.0.0.1:8000/api/services/service/${id}/approve/`,
+    await axios.post(`https://service-locator-9aja.onrender.com/api/services/service/${id}/approve/`,
       {},
       { headers: { Authorization: `Token ${token}` } }
     );
@@ -55,7 +55,7 @@ const ServicesList = () => {
 //تحديث حالة الخدمة لمرفوضه
   const rejectService = async (id, reason) => {
     const token = localStorage.getItem("token");
-    await axios.post(`http://127.0.0.1:8000/api/services/service/${id}/reject/`,
+    await axios.post(`https://service-locator-9aja.onrender.com/api/services/service/${id}/reject/`,
       { reason },
       { headers: { Authorization: `Token ${token}` } }
     );
@@ -68,7 +68,7 @@ const ServicesList = () => {
   const handleDeleteService = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/services/service/${id}/`, {
+      await axios.delete(`https://service-locator-9aja.onrender.com/api/services/service/${id}/`, {
         headers: {
           Authorization: `Token ${token}`,
         },
@@ -120,8 +120,8 @@ const ServicesList = () => {
       try {
         const query = searchTerm.trim();
         const url = query
-          ? `http://127.0.0.1:8000/api/services/service/?search=${encodeURIComponent(query)}`
-          : `http://127.0.0.1:8000/api/services/service/`;
+          ? `https://service-locator-9aja.onrender.com/api/services/service/?search=${encodeURIComponent(query)}`
+          : `https://service-locator-9aja.onrender.com/api/services/service/`;
 
         const res = await axios.get(url, {
           headers: { Authorization: `Token ${token}` }

@@ -64,7 +64,7 @@ const ServicePage = () => {
 
   useEffect(() => {
     axios
-      .get(`http://127.0.0.1:8000/api/services/service/${id}/`)
+      .get(`https://service-locator-9aja.onrender.com/api/services/service/${id}/`)
       .then(async (res) => {
         setService(res.data);
 
@@ -85,7 +85,7 @@ if (res.data.latitude && res.data.longitude) {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/services/public/products/?service=${id}`
+          `https://service-locator-9aja.onrender.com/api/services/public/products/?service=${id}`
         );
         setProducts(res.data);
       } catch (err) {
@@ -101,7 +101,7 @@ if (res.data.latitude && res.data.longitude) {
     if (!token) return;
 
     axios.get(
-      `http://127.0.0.1:8000/api/users/my-rating/?service=${id}`,
+      `https://service-locator-9aja.onrender.com/api/users/my-rating/?service=${id}`,
       {
         headers: {
           Authorization: `Token ${token}`,
@@ -116,7 +116,7 @@ if (res.data.latitude && res.data.longitude) {
 
   useEffect(() => {
     axios
-      .get(`http://127.0.0.1:8000/api/users/service-rating/?service=${id}`)
+      .get(`https://service-locator-9aja.onrender.com/api/users/service-rating/?service=${id}`)
       .then(res => setRatingSummary(res.data))
       .catch(() => setRatingSummary({ average: 0, count: 0 }));
   }, [id]);
@@ -124,7 +124,7 @@ if (res.data.latitude && res.data.longitude) {
 
   useEffect(() => {
     axios
-      .get(`http://127.0.0.1:8000/api/users/comments/?service=${id}`)
+      .get(`https://service-locator-9aja.onrender.com/api/users/comments/?service=${id}`)
       .then(res => setComments(res.data))
       .catch(err => console.error(err));
   }, [id]);
@@ -135,7 +135,7 @@ if (res.data.latitude && res.data.longitude) {
 
     try {
       await axios.post(
-        "http://127.0.0.1:8000/api/users/suggestions/create/",
+        "https://service-locator-9aja.onrender.com/api/users/suggestions/create/",
         {
           message,
           service_id: id, // ✅ هذا الصحيح
@@ -164,7 +164,7 @@ if (res.data.latitude && res.data.longitude) {
       // ⭐ 1. إرسال التقييم إذا ما قيّم سابقًا
       if (!userRating && rating) {
         await axios.post(
-          "http://127.0.0.1:8000/api/users/reviews/",
+          "https://service-locator-9aja.onrender.com/api/users/reviews/",
           { service: id, rating },
           {
             headers: {
@@ -186,7 +186,7 @@ if (res.data.latitude && res.data.longitude) {
         });
 
         await axios.post(
-          "http://127.0.0.1:8000/api/users/comments/",
+          "https://service-locator-9aja.onrender.com/api/users/comments/",
           formData,
           {
             headers: {
@@ -196,7 +196,7 @@ if (res.data.latitude && res.data.longitude) {
         );
 
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/users/comments/?service=${id}`
+          `https://service-locator-9aja.onrender.com/api/users/comments/?service=${id}`
         );
         setComments(res.data);
       }

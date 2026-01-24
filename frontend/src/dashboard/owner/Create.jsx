@@ -44,7 +44,7 @@ const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   // جلب أنواع الخدمات
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/services/categories/')
+    axios.get('https://service-locator-9aja.onrender.com/api/services/categories/')
       .then(res => setCategories(res.data))
       .catch(err => console.error('خطأ في تحميل الأقسام:', err));
   }, []);
@@ -137,7 +137,7 @@ const [showRegisterModal, setShowRegisterModal] = useState(false);
     if (logoImage) formData.append('logo_image', logoImage);
     try {
       // 1️⃣ إنشاء الخدمة
-      const res = await axios.post('http://127.0.0.1:8000/api/services/service/', formData, {
+      const res = await axios.post('https://service-locator-9aja.onrender.com/api/services/service/', formData, {
         headers: {
           Authorization: `Token ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -165,7 +165,7 @@ const [showRegisterModal, setShowRegisterModal] = useState(false);
 
       for (let entry of schedulePayload) {
         await axios.post(
-          "http://127.0.0.1:8000/api/services/work-schedules/",
+          "https://service-locator-9aja.onrender.com/api/services/work-schedules/",
           {
             service: newService.id,
             ...entry,
@@ -203,11 +203,11 @@ const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   useEffect(() => {
     // جلب المديريات
-    axios.get('http://127.0.0.1:8000/api/services/directorates/')
+    axios.get('https://service-locator-9aja.onrender.com/api/services/directorates/')
       .then(res => setDirectoratesList(res.data))
       .catch(err => console.error("خطأ في جلب المديريات:", err));
     // جلب الشوارع
-    axios.get('http://127.0.0.1:8000/api/services/streets/')
+    axios.get('https://service-locator-9aja.onrender.com/api/services/streets/')
       .then(res => setStreetsList(res.data))
       .catch(err => console.error("خطأ في جلب الشوارع:", err));
   }, []);

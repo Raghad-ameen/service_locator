@@ -15,7 +15,7 @@ const ProductList = () => {
 
     useEffect(() => {
         axios
-        .get(`http://127.0.0.1:8000/api/services/public/products/?service=${serviceId}`)
+        .get(`https://service-locator-9aja.onrender.com/api/services/public/products/?service=${serviceId}`)
         .then(res => setProducts(res.data))
         .catch(err => console.log("خطأ في تحميل المنتجات:", err));
     }, [serviceId]);

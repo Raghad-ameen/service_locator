@@ -26,7 +26,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!token) return;
     axios
-      .get("http://127.0.0.1:8000/api/services/dashboard/stats/", {
+      .get("https://service-locator-9aja.onrender.com/api/services/dashboard/stats/", {
         headers: {
           Authorization: `Token ${token}`,
         },
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!token) return;
     axios.get(
-      `http://127.0.0.1:8000/api/services/services-monthly/?year=${serviceYear}&month=${serviceMonth}`,
+      `https://service-locator-9aja.onrender.com/api/services/services-monthly/?year=${serviceYear}&month=${serviceMonth}`,
       { headers: { Authorization: `Token ${token}` } }
     ).then(res => setServicesChart(res.data))
     .catch(err => console.error("Services chart error:", err));
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!token) return;
     axios.get(
-      `http://127.0.0.1:8000/api/services/users-monthly/?year=${userYear}&month=${userMonth}`,
+      `https://service-locator-9aja.onrender.com/api/services/users-monthly/?year=${userYear}&month=${userMonth}`,
       { headers: {Authorization: `Token ${token}` } }
     ).then(res => setUsersChart(res.data));
   }, [userMonth, userYear]);

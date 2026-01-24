@@ -11,7 +11,7 @@ import { useAuth } from "../context/AuthContext";
 
 
 function Profile() {
-  const BASE_URL = "http://127.0.0.1:8000/api/users/";
+  const BASE_URL = "https://service-locator-9aja.onrender.com/api/users/";
   const [activeField, setActiveField] = useState(null);
   const [originalInfo, setOriginalInfo] = useState({});
   const [validationErrors, setValidationErrors] = useState({});

@@ -15,7 +15,7 @@ const Footer = () => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/services/categories/')
+    axios.get('https://service-locator-9aja.onrender.com/api/services/categories/')
     .then(res => setCategories(res.data))
     .catch(err => console.error('خطأ في تحميل الأقسام:', err));
   }, []);

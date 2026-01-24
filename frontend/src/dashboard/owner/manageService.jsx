@@ -57,7 +57,7 @@ const manageService = () => {
       return;
     }
 
-    axios.get('http://127.0.0.1:8000/api/services/categories/', {
+    axios.get('https://service-locator-9aja.onrender.com/api/services/categories/', {
       headers: {
         Authorization: `Token ${token}`
       }
@@ -74,7 +74,7 @@ const manageService = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        "http://127.0.0.1:8000/api/services/service/my_service/",
+        "https://service-locator-9aja.onrender.com/api/services/service/my_service/",
         {
           headers: { Authorization: `Token ${token}` },
         }
@@ -219,7 +219,7 @@ const manageService = () => {
 
       // حفظ الخدمة
       await axios.patch(
-        `http://127.0.0.1:8000/api/services/service/${service.id}/`,
+        `https://service-locator-9aja.onrender.com/api/services/service/${service.id}/`,
         data,
         {
           headers: {
@@ -235,7 +235,7 @@ const manageService = () => {
         // دوام جديد → POST
         if (ws._isNew) {
           await axios.post(
-            "http://127.0.0.1:8000/api/services/work-schedules/",
+            "https://service-locator-9aja.onrender.com/api/services/work-schedules/",
             {
               service: service.id,
               day: ws.day,
@@ -261,7 +261,7 @@ const manageService = () => {
         }
 
         await axios.patch(
-          `http://127.0.0.1:8000/api/services/work-schedules/${ws.id}/`,
+          `https://service-locator-9aja.onrender.com/api/services/work-schedules/${ws.id}/`,
           payload,
           { headers: { Authorization: `Token ${token}` } }
         );
@@ -269,7 +269,7 @@ const manageService = () => {
 
       //حذف دوام
       for (const id of deletedSchedules) {
-        await axios.delete(`http://127.0.0.1:8000/api/services/work-schedules/${id}/`, {
+        await axios.delete(`https://service-locator-9aja.onrender.com/api/services/work-schedules/${id}/`, {
           headers: { Authorization: `Token ${token}` }
         });
       }
@@ -338,7 +338,7 @@ const manageService = () => {
     try {
       const token = localStorage.getItem("token");
 
-      await axios.delete(`http://127.0.0.1:8000/api/services/service/${service.id}/`, {
+      await axios.delete(`https://service-locator-9aja.onrender.com/api/services/service/${service.id}/`, {
         headers: { Authorization: `Token ${token}` },
       });
 

@@ -16,7 +16,7 @@ const ComplainsPage = () => {
     const fetchComplaints = async () => {
       try {
         const res = await axios.get(
-          "http://127.0.0.1:8000/api/users/suggestions/",
+          "https://service-locator-9aja.onrender.com/api/users/suggestions/",
           {
             headers: {
               Authorization: `Token ${token}`
@@ -36,7 +36,7 @@ const ComplainsPage = () => {
     if (!reply.trim()) return;
 
     await axios.post(
-      `http://127.0.0.1:8000/api/users/suggestions/${selected.id}/reply/`,
+      `https://service-locator-9aja.onrender.com/api/users/suggestions/${selected.id}/reply/`,
       { response: reply },
       {
         headers: {
@@ -59,7 +59,7 @@ const ComplainsPage = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(
-        `http://127.0.0.1:8000/api/users/suggestions/${id}/`,
+        `https://service-locator-9aja.onrender.com/api/users/suggestions/${id}/`,
         {
           headers: {
             Authorization: `Token ${token}`,

@@ -9,7 +9,7 @@ export function usePendingAlerts({ token, intervalMs = 30000 }) {
 
     const fetchCount = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/services/pending-count/", {
+        const res = await fetch("https://service-locator-9aja.onrender.com/api/services/pending-count/", {
           headers: { Authorization: `Token ${token}` },
         });
         if (!res.ok) return;

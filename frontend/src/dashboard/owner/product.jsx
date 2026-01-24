@@ -31,7 +31,7 @@ const ProductsPage = () => {
     const fetchService = async () => {
       try {
         const res = await axios.get(
-          "http://127.0.0.1:8000/api/services/service/my_service/",
+          "https://service-locator-9aja.onrender.com/api/services/service/my_service/",
           {
             headers: { Authorization: `Token ${token}` },
           }
@@ -53,7 +53,7 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/services/products/?service=${service.id}`,
+          `https://service-locator-9aja.onrender.com/api/services/products/?service=${service.id}`,
           { headers: { Authorization: `Token ${token}` } }
         );
         setProducts(res.data);
@@ -151,7 +151,7 @@ const ProductsPage = () => {
         });
 
         await axios.patch(
-          `http://127.0.0.1:8000/api/services/products/${editingProduct.id}/`,
+          `https://service-locator-9aja.onrender.com/api/services/products/${editingProduct.id}/`,
           formData,
           {
             headers: {
@@ -164,7 +164,7 @@ const ProductsPage = () => {
       // ➕ إضافة
       else {
         await axios.post(
-          "http://127.0.0.1:8000/api/services/products/",
+          "https://service-locator-9aja.onrender.com/api/services/products/",
           formData,
           {
             headers: {
@@ -188,7 +188,7 @@ const ProductsPage = () => {
     const token = localStorage.getItem("token");
 
     await axios.delete(
-      `http://127.0.0.1:8000/api/services/products/${id}/`,
+      `https://service-locator-9aja.onrender.com/api/services/products/${id}/`,
       { headers: { Authorization: `Token ${token}` } }
     );
 

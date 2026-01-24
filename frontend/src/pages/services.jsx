@@ -175,7 +175,7 @@ const services = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await axios.get(`http://127.0.0.1:8000/api/services/service/`);
+        const res = await axios.get(`https://service-locator-9aja.onrender.com/api/services/service/`);
         setLoading(false);
 
         // جلب العناوين من Nominatim
@@ -220,7 +220,7 @@ const services = () => {
   useEffect(() => {
     const fetchDirectorates = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/services/directorates/");
+        const res = await axios.get("https://service-locator-9aja.onrender.com/api/services/directorates/");
         setDirectorates(res.data);
       } catch (err) {
         console.error("خطأ في تحميل المديريات:", err);
@@ -233,7 +233,7 @@ const services = () => {
   useEffect(() => {
     const fetchStreets = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/services/streets/");
+        const res = await axios.get("https://service-locator-9aja.onrender.com/api/services/streets/");
         setStreets(res.data);
       } catch (err) {
         console.error("خطأ في تحميل الشوارع:", err);
@@ -373,7 +373,7 @@ const services = () => {
                 key={s.id}
                 onClick={async () => {
                   try {
-                    await axios.post(`http://127.0.0.1:8000/api/services/service/${s.id}/add_visit/`);
+                    await axios.post(`https://service-locator-9aja.onrender.com/api/services/service/${s.id}/add_visit/`);
                   } catch (err) {
                     console.error("خطأ في زيادة الزيارة:", err);
                   }

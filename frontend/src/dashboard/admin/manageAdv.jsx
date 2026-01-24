@@ -98,8 +98,8 @@ const ManageAdv = () => {
     setFormErrors({});
 
     const url = editingPackage
-      ? `http://127.0.0.1:8000/api/services/admin/packages/${editingPackage.id}/`
-      : `http://127.0.0.1:8000/api/services/admin/packages/`;
+      ? `https://service-locator-9aja.onrender.com/api/services/admin/packages/${editingPackage.id}/`
+      : `https://service-locator-9aja.onrender.com/api/services/admin/packages/`;
 
     const method = editingPackage ? "patch" : "post";
 
@@ -136,7 +136,7 @@ const ManageAdv = () => {
 
   const fetchPendingAds = async () => {
     const res = await axios.get(
-      "http://127.0.0.1:8000/api/services/admin/ads/pending/",
+      "https://service-locator-9aja.onrender.com/api/services/admin/ads/pending/",
       { headers: { Authorization: `Token ${token}` } }
     );
     setAds(res.data);
@@ -145,14 +145,14 @@ const ManageAdv = () => {
 
   const fetchPackages = async () => {
     const res = await axios.get(
-      "http://127.0.0.1:8000/api/services/admin/packages/",
+      "https://service-locator-9aja.onrender.com/api/services/admin/packages/",
       { headers: { Authorization: `Token ${token}` } }
     );
     setPackages(res.data);
   };
   const fetchAccounts = async () => {
     const res = await axios.get(
-      "http://127.0.0.1:8000/api/services/admin/payment-accounts/",
+      "https://service-locator-9aja.onrender.com/api/services/admin/payment-accounts/",
       { headers: { Authorization: `Token ${token}` } }
     );
     setAccounts(res.data);
@@ -162,7 +162,7 @@ const ManageAdv = () => {
   // قبول الإعلان
   const approveAd = async (id) => {
     await axios.post(
-      `http://127.0.0.1:8000/api/services/admin/ads/${id}/approve/`,
+      `https://service-locator-9aja.onrender.com/api/services/admin/ads/${id}/approve/`,
       {}, // لا بيانات مطلوبة
       { headers: { Authorization: `Token ${token}` } }
     );
@@ -175,7 +175,7 @@ const ManageAdv = () => {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/api/services/admin/ads/${selectedAdId}/reject/`,
+        `https://service-locator-9aja.onrender.com/api/services/admin/ads/${selectedAdId}/reject/`,
         { reason: rejectReason },  // السبب نرسلها للباك
         { headers: { Authorization: `Token ${token}` } }
       );
@@ -191,7 +191,7 @@ const ManageAdv = () => {
   const deletePackage = async (id) => {
     try {
       await axios.delete(
-        `http://127.0.0.1:8000/api/services/admin/packages/${id}/`,
+        `https://service-locator-9aja.onrender.com/api/services/admin/packages/${id}/`,
         { headers: { Authorization: `Token ${token}` } }
       );
 
@@ -267,7 +267,7 @@ const ManageAdv = () => {
 
     try {
       await axios.post(
-        "http://127.0.0.1:8000/api/services/admin/payment-accounts/",
+        "https://service-locator-9aja.onrender.com/api/services/admin/payment-accounts/",
         accountForm,
         { headers: { Authorization: `Token ${token}` } }
       );
@@ -579,7 +579,7 @@ const ManageAdv = () => {
                         message: "هل أنت متأكد من حذف هذا الحساب؟",
                         onConfirm: async () => {
                           await axios.delete(
-                            `http://127.0.0.1:8000/api/services/admin/payment-accounts/${acc.id}/`,
+                            `https://service-locator-9aja.onrender.com/api/services/admin/payment-accounts/${acc.id}/`,
                             { headers: { Authorization: `Token ${token}` } }
                           );
                           fetchAccounts();

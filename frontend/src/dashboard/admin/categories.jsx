@@ -36,8 +36,8 @@ const Categories = () => {
       try {
         const query = searchTerm.trim();
         const url = query
-          ? `http://127.0.0.1:8000/api/services/categories/?search=${encodeURIComponent(query)}`
-          : `http://127.0.0.1:8000/api/services/categories/`;
+          ? `https://service-locator-9aja.onrender.com/api/services/categories/?search=${encodeURIComponent(query)}`
+          : `https://service-locator-9aja.onrender.com/api/services/categories/`;
 
         const res = await axios.get(url, {
           headers: { Authorization: `Token ${token}` }
@@ -94,7 +94,7 @@ const Categories = () => {
       if (editingCategory) {
         // تعديل
         const res = await axios.patch(
-          `http://127.0.0.1:8000/api/services/categories/${editingCategory.id}/`,
+          `https://service-locator-9aja.onrender.com/api/services/categories/${editingCategory.id}/`,
           formData,
           {
             headers: {
@@ -111,7 +111,7 @@ const Categories = () => {
       } else {
         // إضافة
         const res = await axios.post(
-          'http://127.0.0.1:8000/api/services/categories/',
+          'https://service-locator-9aja.onrender.com/api/services/categories/',
           formData,
           {
             headers: {
@@ -153,7 +153,7 @@ const Categories = () => {
   const handleDeleteCategory = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/services/categories/${id}/`, {
+      await axios.delete(`https://service-locator-9aja.onrender.com/api/services/categories/${id}/`, {
         headers: {
           Authorization: `Token ${token}`,
         },

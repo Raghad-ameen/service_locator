@@ -16,7 +16,7 @@ export const FavoriteProvider = ({ children }) => {
 
     try {
       const res = await axios.get(
-        "http://127.0.0.1:8000/api/services/favorites/",
+        "https://service-locator-9aja.onrender.com/api/services/favorites/",
         {
           headers: {
             Authorization: `Token ${token}`,
@@ -43,7 +43,7 @@ const toggleFavorite = async (service) => {
 
   try {
     await axios.post(
-      `http://127.0.0.1:8000/api/services/favorites/${service.id}/toggle/`,
+      `https://service-locator-9aja.onrender.com/api/services/favorites/${service.id}/toggle/`,
       {},
       {
         headers: {
@@ -54,7 +54,7 @@ const toggleFavorite = async (service) => {
 
     // ✅ بعد أي تغيير → أعد الجلب من السيرفر
     const res = await axios.get(
-      "http://127.0.0.1:8000/api/services/favorites/",
+      "https://service-locator-9aja.onrender.com/api/services/favorites/",
       {
         headers: {
           Authorization: `Token ${token}`,

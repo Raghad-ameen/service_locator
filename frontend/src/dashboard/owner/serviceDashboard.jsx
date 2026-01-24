@@ -30,7 +30,7 @@ const serviceDashboard = () => {
     const token = localStorage.getItem("token");
     const fetchDashboard = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/services/owner-dashboard/", {
+        const res = await axios.get("https://service-locator-9aja.onrender.com/api/services/owner-dashboard/", {
           headers: { Authorization: `Token ${token}` }
         });
         setStats(res.data);

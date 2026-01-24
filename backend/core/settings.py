@@ -158,6 +158,6 @@ MEDIA_URL = 'public/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR.parent, 'frontend', 'public', 'media')
 
 
-ALLOWED_HOSTS = ['https://service-locator-9aja.onrender.com']
+ALLOWED_HOSTS = ['service-locator-9aja.onrender.com']
 
 

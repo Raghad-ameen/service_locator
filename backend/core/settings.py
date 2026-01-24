@@ -152,6 +152,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # React dev server
+     "https://serviceslocator.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 MEDIA_URL = 'public/media/'

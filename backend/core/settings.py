@@ -158,13 +158,6 @@ MEDIA_URL = 'public/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR.parent, 'frontend', 'public', 'media')
 
 
-# settings.py
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'yourgmail@gmail.com'  # إيميل Gmail حقيقي
-EMAIL_HOST_PASSWORD = 'your_app_password'  # App Password من Gmail
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+ALLOWED_HOSTS = ['service_locator.onrender.com']
 
 

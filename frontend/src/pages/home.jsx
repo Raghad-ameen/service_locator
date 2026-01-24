@@ -15,6 +15,7 @@ import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/autoplay";
 import "swiper/css/navigation";
+import hero_img from "../../public/media/map.png"
 
 // ===================== استيراد صورة النبذة =====================
 import mapImage from "../assets/map.png";
@@ -24,7 +25,7 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(1)
   const cols = Math.min(categories.length, 5);
-const swiperRef = useRef(null);
+  const swiperRef = useRef(null);
   const aboutRef = useRef(null);
   const serviceRef = useRef(null);
   const heroRef = useRef(null);
@@ -61,6 +62,37 @@ const swiperRef = useRef(null);
       serviceRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [state]);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % slides.length);
+    }, 3000); // كل 4 ثواني
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const slides = [
+    {
+      title: "مرحباً بك في اسم الموقع",
+      description: "كل ما تحتاجه بين يديك في مكان واحد",
+      button: "ابدأ الآن",
+      link: "/services",
+    },
+    {
+      title: "اكتشف أفضل الخدمات بسهولة",
+      description: "تصفح أحدث العروض واستفد من خدماتنا",
+      button: "تصفح العروض",
+      link: "/offers",
+    },
+    {
+      title: "حلول ذكية وسريعة",
+      description: "نوفر لك الوقت والجهد في الوصول للخدمة",
+      button: "اكتشف المزيد",
+      link: "/about",
+    },
+  ];
+
 
   return (
     <div dir="rtl" className="font-['Montserrat-Arabic'] font-light text-[15px] mx-auto">
@@ -68,55 +100,79 @@ const swiperRef = useRef(null);
       {/* ======================= السلايدر ======================= */}
       <section ref={heroRef} id="hero" className="scroll-mt-40 mx-auto relative z-2 overflow-hidden pt-5 lg:px-10 md:px-5">
         <div className="w-full lg:h-[85vh] h-[30vh] overflow-hidden md:rounded-3xl">
-          <Swiper
-          onSwiper={(swiper) => (swiperRef.current = swiper)}
-            key={ads.length}
-            slidesPerView={1}
-            loop={ads.length > 1}
-            autoplay={ads.length > 1 ? { delay: 3000 } : undefined}
-            speed={1000} // duration of fade
-            effect="fade"
-            fadeEffect={{ crossFade: true }}
-            modules={[Autoplay, EffectFade, Navigation]}
-            onSlideChange={(swiper) => {
-              const slideNum = (swiper.realIndex); // يحسب الرقم بشكل صحيح من 1
-              setCurrentSlide(slideNum);
-              setActiveSlideIndex(swiper.activeIndex);
-            }}
-            initialSlide={0}
-            navigation={{
-              nextEl: ".swiper-button-next-custom",
-              prevEl: ".swiper-button-prev-custom",
-            }}
-            className="h-full"
-          >
-            {ads.map((ad) => (
-              <SwiperSlide key={ad.id}>
-                <div className="relative h-full">
-                  {/* صورة الإعلان */}
-                  <img
-                    src={ad.image}
-                    className="w-full h-full object-cover"
-                    alt="advertisement"
-                  />
+          {ads.length > 0 ? (
+            <Swiper
+              onSwiper={(swiper) => (swiperRef.current = swiper)}
+              key={ads.length}
+              slidesPerView={1}
+              loop={ads.length > 1}
+              autoplay={ads.length > 1 ? { delay: 3000 } : undefined}
+              speed={1000} // duration of fade
+              effect="fade"
+              fadeEffect={{ crossFade: true }}
+              modules={[Autoplay, EffectFade, Navigation]}
+              onSlideChange={(swiper) => {
+                const slideNum = (swiper.realIndex); // يحسب الرقم بشكل صحيح من 1
+                setCurrentSlide(slideNum);
+                setActiveSlideIndex(swiper.activeIndex);
+              }}
+              initialSlide={0}
+              navigation={{
+                nextEl: ".swiper-button-next-custom",
+                prevEl: ".swiper-button-prev-custom",
+              }}
+              className="h-full"
+            >
+              {ads.map((ad) => (
+                <SwiperSlide key={ad.id}>
+                  <div className="relative h-full">
+                    {/* صورة الإعلان */}
+                    <img
+                      src={ad.image}
+                      className="w-full h-full object-cover"
+                      alt="advertisement"
+                    />
 
-                  {/* خلفية غامقة */}
-                  <div className="absolute inset-0 bg-linear-to-l from-black/70 to-transparent z-10" />
+                    {/* خلفية غامقة */}
+                    <div className="absolute inset-0 bg-linear-to-l from-black/70 to-transparent z-10" />
 
-                  {/* النص */}
-                  <div className="absolute top-1/4 md:right-20 right-5 z-20">
-                    <p className="text-white lg:text-5xl md:text-4xl text-2xl font-bold mb-6">
-                      {ad.service_title}
-                    </p>
+                    {/* النص */}
+                    <div className="absolute top-1/4 md:right-20 right-5 z-20">
+                      <p className="text-white lg:text-5xl md:text-4xl text-2xl font-bold mb-6">
+                        {ad.service_title}
+                      </p>
 
-                    <p className="text-white lg:text-2xl md:text-lg text-base leading-[2.2rem] max-w-125">
-                      {ad.description}
-                    </p>
+                      <p className="text-white lg:text-2xl md:text-lg text-base leading-[2.2rem] max-w-125">
+                        {ad.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            /* ==================== في حال لا يوجد إعلانات ==================== */
+            <div className="relative h-full">
+              {/* صورة ثابتة */}
+              <img
+                src= {hero_img}
+                className="w-full h-full object-cover"
+                alt="hero"
+              />
+
+              <div className="absolute inset-0 bg-linear-to-l from-black/70 to-transparent z-10" />
+
+              <div className="absolute top-1/4 md:right-20 right-5 z-20 transition-all duration-700">
+                <p className="text-white lg:text-5xl md:text-4xl text-2xl font-bold mb-6 animate-fade">
+                  {slides.title}
+                </p>
+
+                <p className="text-white lg:text-2xl md:text-lg text-base leading-[2.2rem] max-w-125">
+                  {slides.description}
+                </p>
+              </div>
+            </div>
+          )}
           {/* navigation button */}
           <div className="absolute sm:bottom-4 sm:right-5 bottom-5 small:right-[23%] right-[20%] translate-[-50%] flex gap-4 z-10 ">
             <button className="swiper-button-prev-custom  w-10 h-10 p-3.5 rounded-full inline-flex justify-start items-center gap-2.5 cursor-pointer border border-white/50">

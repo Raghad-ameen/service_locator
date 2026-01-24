@@ -11,6 +11,24 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class Directorate(models.Model):
+    name = models.CharField(max_length=255, unique=True, verbose_name="اسم المديرية")
+
+    def __str__(self):
+        return self.name
+
+class Street(models.Model):
+    name = models.CharField(max_length=255, verbose_name="اسم الشارع")
+    directorate = models.ForeignKey(Directorate, on_delete=models.CASCADE, related_name="streets")
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("name", "directorate")
+
+    def __str__(self):
+        return f"{self.name} - {self.directorate.name}"
+
 class Service(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='services')
     title = models.CharField(max_length=255)
@@ -20,15 +38,11 @@ class Service(models.Model):
     # الصور
     cover_image = models.ImageField(upload_to='service_profile/', max_length=255, blank=True, null=True)  # مطلوب
     logo_image = models.ImageField(upload_to='service_logos/', max_length=255, blank=True, null=True)  # اختياري
-
-    # الموقع
-    # directorate = models.CharField(max_length=255)
-    # street = models.CharField(max_length=255)
-    # location_map = models.TextField(blank=True, null=True)  # يمكن تخزين إحداثيات أو رابط خريطة
+    directorate = models.ForeignKey(Directorate, on_delete=models.SET_NULL, null=True, related_name="services")
+    street = models.ForeignKey(Street, on_delete=models.SET_NULL, null=True, related_name="services")
     latitude = models.FloatField(null=True, blank=True) 
     longitude = models.FloatField(null=True, blank=True)
     # التواصل
-    # email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     whatsapp = models.CharField(max_length=20, blank=True, null=True)
     
@@ -107,8 +121,9 @@ class Ad(models.Model):
     description = models.TextField(blank=True)
     package = models.ForeignKey(AdPackage, on_delete=models.PROTECT, related_name='ads')
     start_date = models.DateField()
-    end_date = models.DateField()                       # يُحسب من الباقة عند الإنشاء
+    end_date = models.DateField()       
     status = models.CharField(max_length=20, choices=AdStatus.choices, default=AdStatus.PENDING)
+    receipt_image = models.ImageField( upload_to="ad_payment_receipts/", verbose_name="صورة سند الدفع")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -117,6 +132,15 @@ class Ad(models.Model):
     def is_active(self):
         from django.utils import timezone
         return self.status == AdStatus.APPROVED and self.start_date <= timezone.localdate() <= self.end_date
+
+class PaymentAccount(models.Model):
+    bank_name = models.CharField(max_length=100,verbose_name="اسم البنك")
+    account_name = models.CharField(max_length=100, blank=True, null=True,verbose_name="اسم الحساب")
+    account_number = models.CharField(max_length=100, blank=True, null=True,verbose_name="رقم الحساب / المحفظة")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_number}"
 
 class Favorite(models.Model):
     user = models.ForeignKey(

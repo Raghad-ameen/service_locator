@@ -9,6 +9,7 @@ import NotificationsDropdown from '../../component/NotificationsDropdown';
 import axios from "axios";
 import FavoriteDropdown from "../../component/favoriteDropdown";
 import { useFavorites } from "../../context/favoriteContext";
+import { icon } from "leaflet";
 
 const AdminNav = () => {
   const { user, token, logout } = useAuth();
@@ -91,6 +92,7 @@ const AdminNav = () => {
     { to: "/categories", label: "إدارة الأقسام", icon: Square3Stack3DIcon },
     { to: "/serviceslist", label: "إدارة الخدمات", icon: ShoppingBagIcon },
     { to: "/manageAdv", label: "إدارة الإعلانات", icon: MegaphoneIcon },
+    { to: "/add_location", label:"تحدد نطاق النظام", icon: MegaphoneIcon}
   ];
   //بيانات الخدمة
   useEffect(() => {

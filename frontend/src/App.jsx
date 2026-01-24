@@ -34,51 +34,52 @@ import UserList from './dashboard/admin/users_list';
 import ServicesList from './dashboard/admin/services_list';
 import Categories from './dashboard/admin/categories';
 import ManageAdv from './dashboard/admin/manageAdv';
+import Add_location from './dashboard/admin/add_location'
+
 import "leaflet/dist/leaflet.css";
 
 function App() {
   const [activeModal, setActiveModal] = useState(null);
   const { user } = useAuth();
-  
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Router>
-        <ScrollToTop />
-        <FavoriteProvider>
-          <Routes>
-            {/* Shared layout for all public pages */}
-            <Route element={<Layout activeModal={activeModal} setActiveModal={setActiveModal} />}>
-              <Route path='/' element={<Home />} />
-              <Route path='signup' element={<RegisterForm />} />
-              <Route path='login' element={<Login />} />
-              <Route path='create' element={<Create />} />
-              <Route path='services' element={<Services />} />
-              <Route path='/servicePage/:id' element={<ServicePage/>}/>
-              <Route path='productList' element={<ProductList/>}/>
-              <Route path="Userprofile" element={<Profile/>}/>
-            </Route>
-            {/* Admin section with its own layout */}
-            <Route element={user?.user_type === "admin" ? <AdminNav/>: <Navigate to="/" replace />}>
-              <Route path='adminDashboard' element={<AdminDashboard/>}/>
-              <Route path='userlist' element={<UserList />} />
-              <Route path='serviceslist' element={<ServicesList />} />
-              <Route path='categories' element={<Categories />} />
-              <Route path="manageAdv" element={<ManageAdv/>}/>
-              <Route path="Adminprofile" element={<Profile/>}/>
-            </Route>
-            {/* owner section with its own layout */}
-            <Route element={user?.user_type === "owner" || user?.has_service ? <OwnerNav/>: <Navigate to="/" replace />}>
-              <Route path='serviceDashboard' element={<ServiceDashboard />} />
-              <Route path="manageService" element={<ManageService/>}/>
-              <Route path="advertisement" element={<Advertisement/>}/>
-              <Route path="complain" element={<Complain/>}/>
-              <Route path="product" element={<Product/>}/>
-              <Route path="Ownerprofile" element={<Profile/>}/>
-            </Route>
-          </Routes>
-        </FavoriteProvider>
-      </Router>
+      <ScrollToTop />
+      <FavoriteProvider>
+        <Routes>
+          {/* Shared layout for all public pages */}
+          <Route element={<Layout activeModal={activeModal} setActiveModal={setActiveModal} />}>
+            <Route path='/' element={<Home />} />
+            <Route path='signup' element={<RegisterForm />} />
+            <Route path='login' element={<Login />} />
+            <Route path='create' element={<Create />} />
+            <Route path='services' element={<Services />} />
+            <Route path='/servicePage/:id' element={<ServicePage />} />
+            <Route path='productList' element={<ProductList />} />
+            <Route path="Userprofile" element={<Profile />} />
+          </Route>
+          {/* Admin section with its own layout */}
+          <Route element={user?.user_type === "admin" ? <AdminNav /> : <Navigate to="/" replace />}>
+            <Route path='adminDashboard' element={<AdminDashboard />} />
+            <Route path='userlist' element={<UserList />} />
+            <Route path='serviceslist' element={<ServicesList />} />
+            <Route path='categories' element={<Categories />} />
+            <Route path="manageAdv" element={<ManageAdv />} />
+            <Route path='add_location' element={<Add_location />} />
+            <Route path="Adminprofile" element={<Profile />} />
+          </Route>
+          {/* owner section with its own layout */}
+          <Route element={user?.user_type === "owner" || user?.has_service ? <OwnerNav /> : <Navigate to="/" replace />}>
+            <Route path='serviceDashboard' element={<ServiceDashboard />} />
+            <Route path="manageService" element={<ManageService />} />
+            <Route path="advertisement" element={<Advertisement />} />
+            <Route path="complain" element={<Complain />} />
+            <Route path="product" element={<Product />} />
+            <Route path="Ownerprofile" element={<Profile />} />
+          </Route>
+        </Routes>
+      </FavoriteProvider>
       <ToastContainer
         position="top-center"
         autoClose={1000}

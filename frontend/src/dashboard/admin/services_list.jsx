@@ -186,7 +186,6 @@ const ServicesList = () => {
                       <td className="p-2 flex-1">{service.owner}</td>
                       <td className="p-2 flex-1 flex gap-4 items-center justify-center">
                         <TrashIcon OnClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذه الخدمة ؟", onConfirm: () => handleDeleteService(service.id)}) } className="cursor-pointer" />
-                        <CheckCircleIcon className="h-6 w-6 text-primary hover:text-red-600 cursor-pointer"/>
                       </td>
                     </tr>
                   ))

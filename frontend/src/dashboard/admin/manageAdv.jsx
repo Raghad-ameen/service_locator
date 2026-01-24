@@ -32,7 +32,15 @@ const ManageAdv = () => {
     price: "",
   });
   const [formErrors, setFormErrors] = useState({});
-
+  const [accounts, setAccounts] = useState([]);
+  const [accountForm, setAccountForm] = useState({
+    bank_name: "",
+    account_number: "",
+    account_name: "",
+  });
+  const [accountErrors, setAccountErrors] = useState({});
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const openCreatePackage = () => {
     setEditingPackage(null);
@@ -105,6 +113,8 @@ const ManageAdv = () => {
 
       handleCloseModal();
       fetchPackages();
+      fetchAccounts();
+
     } catch (err) {
       console.error("خطأ في حفظ الباقة:", err);
     }
@@ -120,6 +130,8 @@ const ManageAdv = () => {
   useEffect(() => {
     fetchPendingAds();
     fetchPackages();
+    fetchAccounts();
+
   }, []);
 
   const fetchPendingAds = async () => {
@@ -138,37 +150,43 @@ const ManageAdv = () => {
     );
     setPackages(res.data);
   };
+  const fetchAccounts = async () => {
+    const res = await axios.get(
+      "http://127.0.0.1:8000/api/services/admin/payment-accounts/",
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    setAccounts(res.data);
+  };
 
   /* ================= ACTIONS ================= */
   // قبول الإعلان
-const approveAd = async (id) => {
-  await axios.post(
-    `http://127.0.0.1:8000/api/services/admin/ads/${id}/approve/`,
-    {}, // لا بيانات مطلوبة
-    { headers: { Authorization: `Token ${token}` } }
-  );
-  fetchPendingAds();
-};
-
-// رفض الإعلان
-// رفض الإعلان
-const rejectAd = async () => {
-  if (!selectedAdId) return; // تأكد إنه معرف الإعلان
-
-  try {
+  const approveAd = async (id) => {
     await axios.post(
-      `http://127.0.0.1:8000/api/services/admin/ads/${selectedAdId}/reject/`,
-      { reason: rejectReason },  // السبب نرسلها للباك
+      `http://127.0.0.1:8000/api/services/admin/ads/${id}/approve/`,
+      {}, // لا بيانات مطلوبة
       { headers: { Authorization: `Token ${token}` } }
     );
-    setShowRejectForm(false);
-    setRejectReason("");
-    fetchPendingAds(); // تحديث القائمة بعد الرفض
-  } catch (err) {
-    console.error(err);
-    alert("حدث خطأ أثناء رفض الإعلان");
-  }
-};
+    fetchPendingAds();
+  };
+
+  // رفض الإعلان
+  const rejectAd = async () => {
+    if (!selectedAdId) return; // تأكد إنه معرف الإعلان
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/api/services/admin/ads/${selectedAdId}/reject/`,
+        { reason: rejectReason },  // السبب نرسلها للباك
+        { headers: { Authorization: `Token ${token}` } }
+      );
+      setShowRejectForm(false);
+      setRejectReason("");
+      fetchPendingAds(); // تحديث القائمة بعد الرفض
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء رفض الإعلان");
+    }
+  };
 
   const deletePackage = async (id) => {
     try {
@@ -222,6 +240,47 @@ const rejectAd = async () => {
       month: "long",
       day: "numeric",
     });
+  const addAccount = async () => {
+    const errors = {};
+
+    if (!accountForm.bank_name.trim()) {
+      errors.bank_name = "اسم البنك أو المحفظة مطلوب";
+    }
+
+    if (!accountForm.account_name.trim()) {
+      errors.account_name = "اسم صاحب الحساب مطلوب";
+    }
+
+    if (!accountForm.account_number.trim()) {
+      errors.account_number = "رقم الحساب مطلوب";
+    } else if (!/^[0-9A-Za-z]+$/.test(accountForm.account_number)) {
+      errors.account_number = "رقم الحساب يجب أن يحتوي على أرقام أو أحرف فقط";
+    } else if (accountForm.account_number.length < 10) {
+      errors.account_number = "رقم الحساب قصير جدًا";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAccountErrors(errors);
+      return;
+    }
+    setAccountErrors({});
+
+    try {
+      await axios.post(
+        "http://127.0.0.1:8000/api/services/admin/payment-accounts/",
+        accountForm,
+        { headers: { Authorization: `Token ${token}` } }
+      );
+
+      toast.success("تم إضافة الحساب بنجاح");
+      setAccountForm({ bank_name: "", account_number: "", account_name: "" });
+      setAccountErrors({});
+      fetchAccounts();
+    } catch (err) {
+      console.error(err);
+      toast.error("حدث خطأ أثناء الإضافة");
+    }
+  };
 
 
   /* ================= UI ================= */
@@ -244,6 +303,16 @@ const rejectAd = async () => {
         >
           باقات الإعلانات
         </button>
+        <button
+          onClick={() => setActiveSection("accounts")}
+          className={`pb-2 cursor-pointer relative after:absolute after:-bottom-2 after:right-0 after:h-0.5 after:w-0 after:bg-primary transition duration-700 after:transition-all ${activeSection === "accounts"
+            ? "text-primary after:w-full"
+            : "hover:text-primary-600 hover:after:w-full text-gray-900"
+            }`}
+        >
+          حسابات الدفع
+        </button>
+
       </div>
 
       {/* ================= PACKAGES ================= */}
@@ -357,16 +426,35 @@ const rejectAd = async () => {
                   />
                   <div>
                     <p>{ad.owner_name}</p>
+                    <p>{ad.owner_phone}</p>
                     <p>{ad.service_title}</p>
                     <p className="text-xs text-gray-500">{ad.description}</p>
                     <p className="text-xs">
                       مدة الباقة: ({ad.package.duration_days} يوم)
+                    </p>
+                    <p className="text-xs">
+                      سعر الباقة: ({ad.package.price} ريال)
                     </p>
                     <p className="text-xs text-gray-600 mt-1">
                       من <span className="font-medium">{formatDate(ad.start_date)}</span>
                       {" "}إلى{" "}
                       <span className="font-medium">{formatDate(ad.end_date)}</span>
                     </p>
+                    {ad.payment_image && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-500">صورة الدفع:</p>
+                        <img
+                          src={ad.payment_image}
+                          alt="receipt"
+                          className="w-32 h-auto rounded border cursor-pointer"
+                          onClick={() => {
+                            setSelectedImage(ad.payment_image);
+                            setShowImageModal(true);
+                          }}
+                        />
+                      </div>
+                    )}
+
                   </div>
                 </div>
 
@@ -396,7 +484,7 @@ const rejectAd = async () => {
 
       {/* ================= REJECT MODAL ================= */}
       {showRejectForm && (
-        <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-80">
             <div className="flex justify-between mb-4">
               <h3>سبب الرفض</h3>
@@ -416,6 +504,119 @@ const rejectAd = async () => {
             >
               تأكيد
             </button>
+          </div>
+        </div>
+      )}
+      {/* ================= PAYMENT ACCOUNTS ================= */}
+      {activeSection === "accounts" && (
+        <div className="px-10 mt-10">
+
+          {/* إضافة حساب جديد */}
+          <div className="bg-white border rounded-xl p-6 mb-10">
+            <h3 className="mb-4 font-normal text-primary">إضافة حساب بنكي</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder=" اسم البنك او المحفظة"
+                value={accountForm.bank_name}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, bank_name: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+              />
+              {accountErrors.bank_name && (
+                <p className="text-red-500 text-xs mt-1">{accountErrors.bank_name}</p>
+              )}
+              <input
+                type="text"
+                placeholder=" اسم صاحب الحساب "
+                value={accountForm.account_name}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, account_name: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+              />
+              {accountErrors.account_name && (
+                <p className="text-red-500 text-xs mt-1">{accountErrors.account_name}</p>
+              )}
+              <input
+                type="text"
+                placeholder="رقم الحساب / IBAN"
+                value={accountForm.account_number}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, account_number: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+              />
+              {accountErrors.account_number && (
+                <p className="text-red-500 text-xs mt-1">{accountErrors.account_number}</p>
+              )}
+            </div>
+
+            <button
+              onClick={addAccount}
+              className="mt-4 bg-primary text-white px-6 py-2 rounded"
+            >
+              إضافة الحساب
+            </button>
+          </div>
+
+          {/* عرض الحسابات */}
+          <div className="grid grid-cols-3 gap-6">
+            {accounts.map((acc) => (
+              <div
+                key={acc.id}
+                className="border border-primary/40 rounded-xl p-4"
+              >
+                <h3 className="font-medium">{acc.bank_name}</h3>
+                <p className="text-sm text-gray-500">{acc.account_number}</p>
+                <p className="text-sm text-gray-500">{acc.account_name}</p>
+
+                <div className="flex gap-3 mt-4">
+                  <TrashIcon
+                    OnClick={() =>
+                      showConfirmToast({
+                        message: "هل أنت متأكد من حذف هذا الحساب؟",
+                        onConfirm: async () => {
+                          await axios.delete(
+                            `http://127.0.0.1:8000/api/services/admin/payment-accounts/${acc.id}/`,
+                            { headers: { Authorization: `Token ${token}` } }
+                          );
+                          fetchAccounts();
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* ================ show payment image ================= */}
+      {showImageModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowImageModal(false)} // يغلق عند الضغط على الخلفية فقط
+        >
+          <div
+            className="bg-white p-4 rounded-lg relative"
+            onClick={(e) => e.stopPropagation()} // يمنع إغلاق النافذة عند الضغط داخلها
+          >
+            <div className="flex justify-between mb-4">
+              {/* زر الإغلاق */}
+              <XMarkIcon
+                className="w-6 h-6 cursor-pointer absolute top-2 right-2 text-gray-600 hover:text-red-600"
+                onClick={() => setShowImageModal(false)}
+              />
+            </div>
+
+            {/* الصورة */}
+            <img
+              src={selectedImage}
+              alt="receipt large"
+              className="w-300 h-130"
+            />
           </div>
         </div>
       )}

@@ -100,7 +100,6 @@ function ChartCard({ title, value, data = [], labels, month, year, onMonthChange
             onChange={(e) => onMonthChange(Number(e.target.value))}
             className="text-primary mr-1 focus:outline-none"
           >
-            <span>aiv</span>
             <option value={1}>يناير</option>
             <option value={2}>فبراير</option>
             <option value={3}>مارس</option>

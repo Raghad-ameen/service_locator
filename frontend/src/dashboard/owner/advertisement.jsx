@@ -1,11 +1,87 @@
 import { CameraIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import ConfirmToast from '../../component/ConfirmToast';
 
+function PaymentReceiptUpload({ onChange }) {
+  const [preview, setPreview] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+
+ const startCamera = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    streamRef.current = stream;
+
+    if (videoRef.current) { // ✅ نتأكد إنه مش null
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play();
+    }
+    setPreview(null);
+  } catch (err) {
+    console.error("خطأ في تشغيل الكاميرا:", err);
+  }
+};
+
+  const takePhoto = () => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], "receipt.jpg", { type: "image/jpeg" });
+        onChange(file);
+        setPreview(URL.createObjectURL(blob)); // معاينة الصورة
+      }
+    }, "image/jpeg");
+
+    // إيقاف الكاميرا
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  return (
+    <div>
+      <label>صورة سند الدفع</label>
+      <input
+        type="file"
+        accept="image/*,.pdf"
+        onChange={(e) => {
+  const file = e.target.files[0];
+  if (file) {
+    onChange(file);
+    setPreview(URL.createObjectURL(file));
+  }
+}}
+
+      />
+
+      {!preview && (
+        <>
+          <button type="button" onClick={startCamera}>تشغيل الكاميرا</button>
+          <video ref={videoRef} autoPlay width="300" height="200"></video>
+          <button type="button" onClick={takePhoto}>التقاط صورة</button>
+        </>
+      )}
+
+      <canvas ref={canvasRef} width="300" height="200" style={{display:"none"}}></canvas>
+
+      {preview && (
+        <div>
+          <h4>الصورة الملتقطة:</h4>
+          <img src={preview} alt="receipt preview" width="300" />
+          <button type="button" onClick={startCamera}>إعادة التصوير</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const advertisement = () => {
   const [packages, setPackages] = useState([]);
@@ -16,6 +92,11 @@ const advertisement = () => {
   const [packageId, setPackageId] = useState("");
   const [ads, setAds] = useState([]);
   const [errors, setErrors] = useState({});
+const [transactionNumber, setTransactionNumber] = useState("");
+const [paymentNotes, setPaymentNotes] = useState("");
+const [paymentReceipt, setPaymentReceipt] = useState(null);
+const [accounts, setAccounts] = useState([]);
+
 
 
   useEffect(() => {
@@ -44,6 +125,16 @@ const advertisement = () => {
         console.error("خطأ تحميل الإعلانات:", err.response?.status, err.response?.data);
       });
   }, []);
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  axios.get("http://127.0.0.1:8000/api/services/payment-accounts/", {
+    headers: {
+      Authorization: `Token ${token}`
+    }
+  })
+  .then(res => setAccounts(res.data))
+  .catch(err => console.error("خطأ في جلب الحسابات:", err));
+}, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -65,6 +156,10 @@ const advertisement = () => {
     if (!packageId) {
       newErrors.package = "يرجى اختيار باقة إعلان";
     }
+if (!paymentReceipt) {
+  newErrors.paymentReceipt = "صورة سند الدفع مطلوبة";
+}
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -72,6 +167,12 @@ const advertisement = () => {
 
   const submitAd = async (e) => {
     e.preventDefault();
+
+     console.log("image:", image);
+  console.log("paymentReceipt:", paymentReceipt);
+  console.log("description:", description);
+  console.log("packageId:", packageId);
+  console.log("startDate:", startDate);
 
     if (!validateForm()) return;
 
@@ -89,6 +190,9 @@ const advertisement = () => {
     formData.append("start_date", formattedStartDate);
     formData.append("package", packageId);
 
+formData.append("receipt_image", paymentReceipt);
+
+
     await axios.post(
       "http://127.0.0.1:8000/api/services/provider/ads/",
       formData,
@@ -103,6 +207,10 @@ const advertisement = () => {
     toast.success("تم إرسال طلب الإعلان بنجاح");
     setImage(null);
     setDescription("");
+setTransactionNumber("");
+setPaymentNotes("");
+setPaymentReceipt(null);
+
     setStartDate(null);
     setPackageId("");
     setSelectedPackage(null);
@@ -276,6 +384,53 @@ const advertisement = () => {
             </div>
           )}
         </div>
+{/* ================== تفاصيل الدفع ================== */}
+<div className="border-t pt-6 mt-6 space-y-4">
+
+  <h3 className="text-lg font-normal text-gray-800 text-right">
+    تفاصيل الدفع
+  </h3>
+
+  <p className="text-sm text-gray-500 text-right">
+    يتم الدفع خارج المنصة. يرجى رفع صورة سند الدفع ليتم تفعيل الإعلان.
+  </p>
+
+ <div className="overflow-x-auto mt-6">
+  <table className="w-full border border-gray-200 text-sm text-right">
+    <thead className="bg-gray-100">
+      <tr>
+        <th className="p-3 border">اسم البنك</th>
+        <th className="p-3 border">رقم الحساب</th>
+        <th className="p-3 border">اسم صاحب الحساب</th>
+      </tr>
+    </thead>
+    <tbody>
+      {accounts.length === 0 ? (
+        <tr>
+          <td colSpan="3" className="p-4 text-center text-gray-500">
+            لا توجد حسابات دفع مضافة حالياً
+          </td>
+        </tr>
+      ) : (
+        accounts.map(acc => (
+          <tr key={acc.id} className="hover:bg-gray-50">
+            <td className="p-3 border">{acc.bank_name}</td>
+            <td className="p-3 border font-mono">{acc.account_number}</td>
+            <td className="p-3 border">{acc.account_name}</td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+
+  <PaymentReceiptUpload onChange={setPaymentReceipt}/>
+
+  
+
+</div>
+
+
         <button type='submit' className="bg-green-600 text-white px-10 py-2 rounded-md hover:bg-green-700 transition self-center mt-15"> إرسال الطلب</button>
       </form>
     </div>

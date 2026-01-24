@@ -2,9 +2,10 @@ from rest_framework import viewsets, status, permissions, filters
 from rest_framework.views import APIView
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .models import Service, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus, Favorite
-from .serializers import ServiceSerializer, CategorySerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer, FavoriteSerializer, SuggestionSerializer
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, SAFE_METHODS, BasePermission
+from .models import Service,Directorate,Street, Category, WorkSchedule, Product, ProductImage,  Ad, AdPackage, AdStatus, Favorite,PaymentAccount
+from .serializers import ServiceSerializer, CategorySerializer, DirectorateSerializer,StreetSerializer, WorkScheduleSerializer, ProductSerializer, ProductCreateUpdateSerializer, AdCreateSerializer, AdListSerializer, AdPackageSerializer, AdminAdUpdateSerializer, FavoriteSerializer, SuggestionSerializer ,PaymentAccountSerializer
+import requests
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
 from users.models import CustomUser
@@ -14,39 +15,76 @@ from datetime import timedelta, date
 from calendar import monthrange
 from django.shortcuts import get_object_or_404  
 from django.db.models import Avg, Count
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     parser_classes = [MultiPartParser, FormParser]
-
     filter_backends = [filters.SearchFilter]
     search_fields = ['name'] 
     
+class IsAdminOrReadOnly(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:  # GET, HEAD, OPTIONS
+            return True
+        return request.user and request.user.is_staff
+
+class DirectorateViewSet(viewsets.ModelViewSet):
+    queryset = Directorate.objects.all()
+    serializer_class = DirectorateSerializer
+    permission_classes = [IsAdminOrReadOnly]  # الأدمن فقط
+
+class StreetViewSet(viewsets.ModelViewSet):
+    queryset = Street.objects.all()
+    serializer_class = StreetSerializer
+    permission_classes = [IsAdminOrReadOnly]  # الأدمن فقط
+    def perform_create(self, serializer):
+            street = serializer.save()
+            if street.directorate and street.name:
+                query = f"{street.directorate.name} {street.name}"
+                url = f"https://nominatim.openstreetmap.org/search?format=json&q={query}"
+                response = requests.get(url, headers={"User-Agent": "my-app"})
+                data = response.json()
+                if data:
+                    street.latitude = float(data[0]["lat"])
+                    street.longitude = float(data[0]["lon"])
+                    street.save()
+            return street
+
 class ServiceViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description', 'category__name', 'owner__username'] 
-    
+    search_fields = ['title', 'description', 'category__name', 'owner__username', 'directorate__name', 'street__name'] 
+    filterset_fields = ['directorate', 'street']
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+
+
     def get_queryset(self):
         user = self.request.user
-        
         qs = Service.objects.all().annotate(
             average_rating=Avg('reviews__rating'),
             reviews_count=Count('reviews')
         )
-        # إذا المستخدم غير مسجل دخول → نرجع خدمات عامة فقط
+
+        q = self.request.query_params.get("q")
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q) |
+                Q(description__icontains=q) |
+                Q(directorate__name__icontains=q) |
+                Q(street__name__icontains=q) |
+                Q(category__name__icontains=q)
+            )
+
         if not user.is_authenticated:
-            return Service.objects.filter(status="approved")
+            return qs.filter(status="approved")
 
-        # لو مسجل دخول
-        # الأدمن يشوف كل الخدمات
         if getattr(user, "user_type", None) == "admin":
-            return Service.objects.all()
+            return qs
 
-        # غير الأدمن → يشوف فقط خدماته المقبولة
-        return Service.objects.filter(owner=user, status="approved")
-
+        return qs.filter(owner=user, status="approved")
     # إنشاء خدمة جديدة (تكون قيد المراجعة)
     def perform_create(self, serializer):
         service = serializer.save(owner=self.request.user, status='pending')
@@ -245,6 +283,11 @@ class ProviderAdViewSet(viewsets.ModelViewSet):
             return AdCreateSerializer
         return AdListSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+        
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         today = timezone.localdate()
@@ -356,7 +399,18 @@ class ProviderAdPackageViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsProvider]
     serializer_class = AdPackageSerializer
     queryset = AdPackage.objects.filter(is_active=True)
+    
+class AdminPaymentAccountViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = PaymentAccount.objects.all()
+    serializer_class = PaymentAccountSerializer
 
+class PublicPaymentAccountViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = PaymentAccount.objects.all()
+    serializer_class = PaymentAccountSerializer
+
+    
 #---------------------owner dashboard----------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -536,7 +590,7 @@ class AdminMonthlyUsersStatsAPIView(APIView):
             "data": data,
         })
 
-#  المفضلة
+#--------------------------المفضلة--------------------------
 class FavoriteToggleView(APIView):
     permission_classes = [IsAuthenticated]
 

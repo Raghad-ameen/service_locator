@@ -6,6 +6,7 @@ from rest_framework import generics
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from .models import CustomUser, Suggestion, Review, CommentImage, Comment
+from .utils import send_verification_email
 from services.models import Service
 from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly, IsAuthenticated
 from .serializers import UserListSerializer, SuggestionSerializer , CommentSerializer, ReviewSerializer, RegisterSerializer, LoginSerializer
@@ -17,12 +18,94 @@ from notifications.services import send_notification
 
 
 #signup
-class RegisterView(generics.CreateAPIView):
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = serializer.save()  # إنشاء المستخدم
+                send_verification_email(user)  # إرسال رابط التحقق
+                return Response(
+                    {"message": "Account created. Check your email to verify."},
+                    status=status.HTTP_201_CREATED
+                )
+            except Exception as e:
+                return Response(
+                    {"error": f"Something went wrong: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     queryset = CustomUser.objects.all()
     serializer_class = RegisterSerializer
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.save()
+            send_verification_email(user)
+            return Response(
+                    {"message": "Account created. Check your email to verify."},
+                    status=status.HTTP_201_CREATED
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# users/views.py
+class VerifyEmailView(APIView):
+    def get(self, request, token):
+        try:
+            user = CustomUser.objects.get(email_verification_token=token)
+            user.is_email_verified = True
+            user.email_verification_token = None
+            user.save()
+            return Response({"message": "Email verified successfully"})
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Invalid token"}, status=400)
+
 
 #login
 class LoginView(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+
+            # 🔒 التحقق من الإيميل
+            if not user.is_email_verified:
+                return Response(
+                    {"error": "Please verify your email first"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # التوكن
+            try:
+                token = Token.objects.get(user=user)
+            except Token.DoesNotExist:
+                return Response(
+                    {"detail": "لم يتم العثور على التوكن. الرجاء تسجيل حساب جديد أولاً."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            # تحقق من الخدمات
+            has_service = Service.objects.filter(owner=user, status="approved").exists()
+            
+            if has_service and user.user_type == "user":
+                user.user_type = "owner"
+                user.save()
+                
+            return Response({
+                'token': token.key,
+                'username': user.username,
+                'email': user.email,
+                'phone': user.phone,
+                'profile_image': user.profile_image.url if user.profile_image else None,
+                'user_type': user.user_type,
+                'has_service': has_service
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -35,6 +118,7 @@ class LoginView(APIView):
                     {"detail": "لم يتم العثور على التوكن. الرجاء تسجيل حساب جديد أولاً."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+                
 
             has_service = Service.objects.filter(owner=user, status="approved").exists()
             
@@ -45,7 +129,7 @@ class LoginView(APIView):
             return Response({
                 'token': token.key,
                 'username': user.username,
-                # 'email': user.email,
+                'email': user.email,
                 'phone': user.phone,
                 'profile_image': user.profile_image.url if user.profile_image else None,
                 'user_type': user.user_type,
@@ -227,7 +311,7 @@ def current_user(request):
     return Response({
         'id': user.id,
         'username': user.username,
-        # 'email': user.email,
+        'email': user.email,
         'phone': user.phone,
         'profile_image': request.build_absolute_uri(user.profile_image.url) if user.profile_image else None,
         'user_type': user.user_type,
@@ -248,7 +332,7 @@ def update_user(request):
     confirm_password = data.get('confirm_password')
     # ✅ Update profile info
     user.username = data.get('username', user.username)
-    # user.email = data.get('email', user.email)
+    user.email = data.get('email', user.email)
     user.phone = data.get('phone', user.phone)
 
     if 'profile_image' in request.FILES:
@@ -258,8 +342,8 @@ def update_user(request):
     if CustomUser.objects.exclude(id=user.id).filter(username=data.get('username')).exists():
         errors['username'] = 'اسم المستخدم مستخدم بالفعل'
 
-    # if CustomUser.objects.exclude(id=user.id).filter(email=data.get('email')).exists():
-    #     errors['email'] = 'البريد الإلكتروني مستخدم بالفعل'
+    if CustomUser.objects.exclude(id=user.id).filter(email=data.get('email')).exists():
+        errors['email'] = 'البريد الإلكتروني مستخدم بالفعل'
 
     if CustomUser.objects.exclude(id=user.id).filter(phone=data.get('phone')).exists():
         errors['phone'] = 'رقم الهاتف مستخدم بالفعل'
@@ -285,7 +369,7 @@ def update_user(request):
     return Response({
         'id': user.id,
         'username': user.username,
-        # 'email': user.email,
+        'email': user.email,
         'phone': user.phone,
         'profile_image': request.build_absolute_uri(user.profile_image.url) if user.profile_image else None,
         'user_type': user.user_type,
@@ -315,22 +399,32 @@ def delete_own_account(request):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def search_users(request):
-    query = request.GET.get('q', '').strip()
+    q = request.GET.get('q', '').strip()
 
-    if not query:
-        # ✅ لو ما في كلمة بحث، رجّعي كل المستخدمين
-        users = CustomUser.objects.all()
-    else:
-        # ✅ بحث شامل بعدة حقول
-        users = CustomUser.objects.filter(
-            Q(username__icontains=query) |
-            # Q(email__icontains=query) |
-            Q(phone__icontains=query) |
-            Q(user_type__icontains=query)#المفروض بالعربي
+    users = CustomUser.objects.all()
+
+    if q:
+        user_type = None
+
+        if q.startswith("مس"):
+            user_type = "user"
+        elif q.startswith("صا"):
+            user_type = "owner"
+        elif q.startswith("مش"):
+            user_type = "admin"
+
+        users = users.filter(
+            Q(username__icontains=q) |
+            Q(phone__icontains=q)
         )
 
-    serialized = UserListSerializer(users, many=True)
-    return Response(serialized.data, status=status.HTTP_200_OK)
+        if user_type:
+            users = users | CustomUser.objects.filter(user_type=user_type)
+
+    return Response(
+        UserListSerializer(users.distinct(), many=True).data,
+        status=status.HTTP_200_OK
+    )
 
 # #promote user
 # @api_view(['POST'])

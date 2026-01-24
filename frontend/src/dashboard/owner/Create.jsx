@@ -9,6 +9,9 @@ import AddWH from '../../component/addWH';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastSuccess } from '../../component/toast';
+import Login from "../../account/LoginForm"
+import Register from "../../account/RegisterForm";
+import { useAuth } from '../../context/AuthContext';
 
 const Create = () => {
   const navigate = useNavigate();
@@ -22,30 +25,26 @@ const Create = () => {
   const [description, setDescription] = useState('');
   const [directorate, setDirectorate] = useState('');
   const [street, setStreet] = useState('');
-  //const [directorate, setDirectorate] = useState('');
-  //const [street, setStreet] = useState('');
-  //const [locationMap, setLocationMap] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [coverImage, setCoverImage] = useState(null);
   const [logoImage, setLogoImage] = useState(null);
-  const [coords, setCoords] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
-  const token = localStorage.getItem('token');
+  const [directoratesList, setDirectoratesList] = useState([]);
+  const [streetsList, setStreetsList] = useState([]);
+  const [coords, setCoords] = useState(null);
+  const [zoom, setZoom] = useState(13);
+
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+const [showLoginModal, setShowLoginModal] = useState(false);
+const [loginWarning, setLoginWarning] = useState(false);
+const [showRegisterModal, setShowRegisterModal] = useState(false);
+
 
   // جلب أنواع الخدمات
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('لا يوجد توكن في localStorage');
-      return;
-    }
-
-    axios.get('http://127.0.0.1:8000/api/services/categories/', {
-      headers: {
-        Authorization: `Token ${token}`
-      }
-    })
+    axios.get('http://127.0.0.1:8000/api/services/categories/')
       .then(res => setCategories(res.data))
       .catch(err => console.error('خطأ في تحميل الأقسام:', err));
   }, []);
@@ -106,10 +105,16 @@ const Create = () => {
     document.body.style.overflow = "auto";
 
   };
-  ////////////////////////////////////////////////////////////////
   // إرسال الخدمة
   const handleSubmit = async (e) => {
     e.preventDefault();
+     if (!token) {
+    setLoginWarning(true); // ← يظهر التحذير
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  setLoginWarning(false); 
 
     const isFormValid = validateForm();
     const isWorkHoursValid = workHoursRef.current?.validate();
@@ -118,32 +123,12 @@ const Create = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-
-    const body = {
-      category,
-      title,
-      description,
-      directorate,
-      street,
-      phone,
-      whatsapp,
-      latitude: coords?.lat,
-      longitude: coords?.lon,
-    };
-    console.log("البيانات المرسلة:", body); // اطبع كل البيانات
-    await fetch("/api/services/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, },
-      body: JSON.stringify(body),
-    });
-
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
     formData.append('category_id', category);
-    formData.append('directorate', directorate);
-    formData.append('street', street);
-    // formData.append('location_map', locationMap);
+    formData.append("directorate_id", Number(directorate));
+    formData.append("street_id", Number(street));
     formData.append("latitude", coords?.lat);
     formData.append("longitude", coords?.lon);
     formData.append('phone', phone);
@@ -216,35 +201,16 @@ const Create = () => {
     }
   };
 
-  const directorates = {
-    "صنعاء": {
-      bounds: [
-        [15.30, 44.10],
-        [15.45, 44.30],
-      ],
-    },
-    "الأمانة": {
-      bounds: [
-        [15.35, 44.15],
-        [15.50, 44.35],
-      ],
-    },
-  };
-
-  const streets = {
-    "شارع الزبيري": {
-      bounds: [
-        [15.36, 44.19],
-        [15.38, 44.21],
-      ],
-    },
-    "شارع حدة": {
-      bounds: [
-        [15.33, 44.18],
-        [15.35, 44.22],
-      ],
-    },
-  };
+  useEffect(() => {
+    // جلب المديريات
+    axios.get('http://127.0.0.1:8000/api/services/directorates/')
+      .then(res => setDirectoratesList(res.data))
+      .catch(err => console.error("خطأ في جلب المديريات:", err));
+    // جلب الشوارع
+    axios.get('http://127.0.0.1:8000/api/services/streets/')
+      .then(res => setStreetsList(res.data))
+      .catch(err => console.error("خطأ في جلب الشوارع:", err));
+  }, []);
 
   return (
     <div className='px-50 pt-10 pb-5 font-["Montserrat-Arabic"] font-light text-[14px] w-full'>
@@ -252,6 +218,17 @@ const Create = () => {
         <ChevronRightIcon onClick={() => navigate('/')} className='h-7 w-6 text-primary-700 cursor-pointer' />
         <h2 className='text-xl font-medium'>انشاء خدمة</h2>
       </div>
+      {!token && loginWarning && (
+  <div className="mt-5 p-4 rounded bg-yellow-100 text-yellow-800 border border-yellow-300 w-full text-center">
+    يرجى <span 
+      className="font-medium cursor-pointer text-blue-600" 
+      onClick={() => setShowLoginModal(true)}
+    >
+      تسجيل الدخول أو إنشاء حساب
+    </span> لتتمكن من إنشاء خدمة.
+  </div>
+)}
+
       <div dir='rtl' className='flex items-center justify-center mt-10 w-full'>
         <form onSubmit={handleSubmit} className='w-full flex flex-col items-center justify-center mx-60'>
           {/* service info */}
@@ -325,43 +302,50 @@ const Create = () => {
             <div className='flex gap-8'>
               <div className='flex flex-1 justify-between border-b border-gray-300 pb-5'>
                 <label htmlFor="service" className='text-gray-500'>موقع الخدمة حسب المديرية</label>
+                {/* المديريات */}
                 <select
                   value={directorate}
                   onChange={(e) => {
                     const value = e.target.value;
                     setDirectorate(value);
-                    setStreet("");
-                    setMapBounds(directorates[value]?.bounds || null);
+                    setStreet(""); // إعادة اختيار الشارع
+                    const bounds = directoratesList.find(d => d.id === parseInt(value))?.bounds || null;
+                    setMapBounds(bounds);
                   }}
-                  className="border p-2 w-full mb-4"
                 >
                   <option value="">اختر المديرية</option>
-                  {Object.keys(directorates).map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                  {directoratesList.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
 
-              </div>
-              <div className='flex flex-1 justify-between border-b border-gray-300 pb-5'>
-                <label htmlFor="service" className='text-gray-500'>موقع الخدمة حسب الشارع</label>
+                {/* الشوارع */}
                 <select
                   value={street}
                   onChange={(e) => {
                     const value = e.target.value;
                     setStreet(value);
-                    setMapBounds(streets[value]?.bounds || null);
+
+                    const selectedStreet = streetsList.find(s => s.id === parseInt(value));
+                    if (selectedStreet) {
+                      setCoords({ lat: selectedStreet.latitude, lon: selectedStreet.longitude });
+                      setZoom(17);// تكبير على الشارع
+                      // ← نكبر الخريطة على الشارع
+                    }
                   }}
-                  className="border p-2 w-full mb-4"
                 >
                   <option value="">اختر الشارع</option>
-                  {Object.keys(streets).map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                  {streetsList
+                    .filter(s => s.directorate.id === parseInt(directorate))
+                    .map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
                 </select>
+
               </div>
             </div>
             <h3 className='font-normal'>لتحديد موقع خدمتك بشكل أدق استخدم الخريطة</h3>
-            <div><MyMap value={coords} onChange={setCoords} bounds={mapBounds} /></div>
+            <div><MyMap value={coords} onChange={setCoords} bounds={mapBounds} zoom={zoom} /></div>
             {errors.coords && (
               <p className="text-red-500 text-sm mt-2">{errors.coords}</p>
             )}
@@ -408,6 +392,32 @@ const Create = () => {
         draggable
         pauseOnHover
       />
+ {showLoginModal && (
+  <Login
+    onClose={() => setShowLoginModal(false)}
+    onSwitch={() => {
+      setShowLoginModal(false);
+      setShowRegisterModal(true);
+    }}
+    onSuccess={(newToken) => {
+      setToken(newToken);
+      setShowLoginModal(false);
+      setLoginWarning(false);
+    }}
+  />
+)}
+
+{showRegisterModal && (
+  <Register
+    onClose={() => setShowRegisterModal(false)}
+    onSuccess={(newToken) => {
+      setToken(newToken);
+      setShowRegisterModal(false);
+      setLoginWarning(false);
+    }}
+  />
+)}
+
     </div>
   )
 }

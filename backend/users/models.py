@@ -9,7 +9,9 @@ def default_profile_image():
 class CustomUser(AbstractUser):
     phone = models.CharField(max_length=9, unique=True, validators=[ RegexValidator( regex=r'^7\d{8}$',message="رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام")])
     profile_image = models.ImageField(upload_to='user_profile/', default=default_profile_image, blank=True, null=True)
-    email = models.EmailField(null=True, blank=True)
+    email = models.EmailField(unique=True)
+    is_email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=255, null=True, blank=True)
     username = models.CharField(max_length=150, unique=True)
     USER_TYPES = (
         ('admin', 'مشرف'),
@@ -17,10 +19,10 @@ class CustomUser(AbstractUser):
         ('owner', 'صاحب خدمة'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='user')
-    USERNAME_FIELD = 'phone'
-    REQUIRED_FIELDS = ['username']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'phone']
     def __str__(self):
-        return self.phone
+        return self.email if self.email else self.phone
 class Suggestion(models.Model):
     service = models.ForeignKey("services.Service", on_delete=models.CASCADE, related_name="suggestions")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # ← هذا هو الصحيح

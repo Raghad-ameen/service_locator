@@ -5,13 +5,14 @@ import default_img from "../../../public/media/user_profile/default.png";
 import { TrashIcon } from "../../component/icons"
 import { toast } from "react-toastify";
 import ConfirmToast from "../../component/ConfirmToast";
-import {ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -42,6 +43,18 @@ const UserList = () => {
   useEffect(() => {
     fetchCurrentUser();
   }, []);
+
+  const handleBulkDelete = async () => {
+    showConfirmToast({
+      message: `هل أنت متأكد من حذف ${selectedUsers.length} مستخدم؟`,
+      onConfirm: async () => {
+        for (const userId of selectedUsers) {
+          await deleteUser(userId);
+        }
+        setSelectedUsers([]); // تفريغ الاختيارات بعد الحذف
+      },
+    });
+  };
 
   //لجلب البيانات حسب البحث
   useEffect(() => {
@@ -170,6 +183,20 @@ const UserList = () => {
           {users.length > 0 && (
             <thead>
               <tr className="text-center flex text-primary p-2 bg-primary-50/30 rounded">
+                <th className="py-2">
+                  <input
+                    type="checkbox"
+                    className="accent-green-600 cursor-pointer"
+                    checked={selectedUsers.length === users.length && users.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUsers(users.map((u) => u.id));
+                      } else {
+                        setSelectedUsers([]);
+                      }
+                    }}
+                  />
+                </th>
                 <th className="p-2 flex-1 font-medium">الصورة</th>
                 <th className="p-2 flex-1 font-medium">الاسم</th>
                 {/* <th className="p-2 flex-[2] font-medium">الإيميل</th> */}
@@ -186,6 +213,20 @@ const UserList = () => {
                   key={user.id}
                   className="text-center text-secondary-900 font-light py-2 last:border-none border-b border-primary/30 flex items-center justify-between my-4"
                 >
+                  <td className="p-2">
+                    <input
+                      type="checkbox"
+                      className="accent-green-600 cursor-pointer"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedUsers([...selectedUsers, user.id]);
+                        } else {
+                          setSelectedUsers(selectedUsers.filter((id) => id !== user.id));
+                        }
+                      }}
+                    />
+                  </td>
                   <td className="p-2 flex-1">
                     <img
                       src={user.profile_image || default_img}
@@ -200,7 +241,7 @@ const UserList = () => {
                   <td className="p-2 flex-1">{user.user_type_display}</td>
                   <td className="p-2 flex-1 flex gap-4 items-center justify-center">
                     <TrashIcon
-                      OnClick={() =>showConfirmToast({message: "هل أنت متأكد من انك تريد حذف هذا المستخدم ؟", onConfirm: () => deleteUser(user.id)}) }
+                      OnClick={() => showConfirmToast({ message: "هل أنت متأكد من انك تريد حذف هذا المستخدم ؟", onConfirm: () => deleteUser(user.id) })}
                       className="brightness-150 hover:brightness-110 cursor-pointer"
                     />
                     {/* {user.user_type === "admin" ? (
@@ -215,9 +256,20 @@ const UserList = () => {
                       />
                     )} */}
                   </td>
+
                 </tr>
               ))) : (<tr><td colSpan="5" className="text-center text-gray-500 py-6"> ليس هناك مستخدم بـ "{searchTerm}"</td></tr>)}
           </tbody>
+          {selectedUsers.length > 0 && (
+            <div className="fixed bottom-15 right-[45%] z-50">
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-2 bg-red-600/90 hover:bg-red-700 text-white px-5 py-3 rounded-xl shadow-xl transition duration-200 cursor-pointer"
+              >
+                <span>حذف المحددين ({selectedUsers.length})</span>
+              </button>
+            </div>
+          )}
         </table>
       </div>
     </div>

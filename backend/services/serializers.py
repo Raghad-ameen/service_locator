@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Service, Category, WorkSchedule, Product, ProductImage, Ad, AdPackage, AdStatus, Favorite
+from .models import Service, Category, WorkSchedule, Product, ProductImage, Ad, AdPackage, AdStatus, Favorite,  Directorate, Street,PaymentAccount  
 from users.models import Suggestion 
 from django.utils import timezone
 from datetime import timedelta, date
@@ -15,6 +15,22 @@ class CategorySerializer(serializers.ModelSerializer):
             if value.content_type not in allowed_types:
                 raise serializers.ValidationError("يُسمح فقط برفع ملفات PNG أو SVG.")
         return value
+
+class DirectorateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Directorate
+        fields = ["id", "name"]
+
+class StreetSerializer(serializers.ModelSerializer):
+    directorate = DirectorateSerializer(read_only=True)
+    directorate_id = serializers.PrimaryKeyRelatedField(
+        queryset=Directorate.objects.all(),
+        source='directorate',  # يحول directorate_id → directorate
+        write_only=True
+    )
+    class Meta:
+        model = Street
+        fields = ["id", "name", "directorate", "directorate_id",  "latitude", "longitude"]
 
 class WorkScheduleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,12 +48,21 @@ class ServiceSerializer(serializers.ModelSerializer):
     owner_image = serializers.ImageField(source='owner.profile_image', read_only=True)
     average_rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
+    directorate = DirectorateSerializer(read_only=True)
+    directorate_id = serializers.PrimaryKeyRelatedField(
+        queryset=Directorate.objects.all(), source="directorate", write_only=True
+    )
+    street = StreetSerializer(read_only=True)
+    street_id = serializers.PrimaryKeyRelatedField(
+        queryset=Street.objects.all(), source="street", write_only=True
+    )
+
     class Meta:
         model = Service
         fields = [
             'id', 'owner', 'owner_image', 'title', 'description', 'category', 'category_id',
             'cover_image', 'logo_image', 'phone', 'whatsapp', 'work_schedules','products', 'status', 'created_at','latitude','longitude', "average_rating",
-            "reviews_count",        
+            "reviews_count","directorate", "directorate_id",'street', 'street_id',        
         ]
     def get_average_rating(self, obj):
         return obj.reviews.aggregate(avg=Avg("rating"))["avg"] or 0
@@ -47,7 +72,6 @@ class ServiceSerializer(serializers.ModelSerializer):
     def get_products(self, obj):
         products = Product.objects.filter(service=obj.id)
         return ProductSerializer(products, many=True).data
-# , 'directorate', 'street','location_map'
 
 # ============ Product Images ============
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -148,9 +172,10 @@ class AdCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ad
-        fields = ['id', 'image', 'description', 'package', 'start_date']
+        fields = ['id', 'image', 'description', 'package', 'start_date', 'receipt_image']
 
     def validate(self, attrs):
+        print("✅ validate attrs:", attrs)
         request = self.context['request']
 
         service = Service.objects.filter(
@@ -163,7 +188,6 @@ class AdCreateSerializer(serializers.ModelSerializer):
                 "لا تملك خدمة معتمدة لإنشاء إعلان."
             )
 
-        # ===== تصحيح تاريخ البدء =====
         start_date = attrs['start_date']
 
         if isinstance(start_date, str):
@@ -175,22 +199,26 @@ class AdCreateSerializer(serializers.ModelSerializer):
             )
 
         attrs['start_date'] = start_date
-        attrs['service'] = service
+        # ❌ ما نضيف service هنا
+
         return attrs
 
     def create(self, validated_data):
+        print("✅ create validated_data:", validated_data)
         request = self.context['request']
         package = validated_data['package']
         start_date = validated_data['start_date']
         end_date = start_date + timedelta(days=package.duration_days)
 
+        service = Service.objects.filter(owner=request.user, status='approved').first()
+
         return Ad.objects.create(
             owner=request.user,
+            service=service,   # ✅ نربط الخدمة هنا
             end_date=end_date,
             status=AdStatus.PENDING,
             **validated_data
         )
-
 class AdListSerializer(serializers.ModelSerializer):
     package = AdPackageSerializer()
     
@@ -198,20 +226,34 @@ class AdListSerializer(serializers.ModelSerializer):
         source="service.owner.username",
         read_only=True
     )
+    owner_phone = serializers.CharField(
+        source="owner.phone",
+        read_only=True
+    )
     
     service_title = serializers.CharField(
         source="service.title",
         read_only=True
     )
+    payment_image = serializers.ImageField(
+        source="receipt_image",
+        read_only=True
+    )
+
     
     class Meta:
         model = Ad
-        fields = ['id','description', 'image', 'start_date', 'end_date', 'status', 'package', 'service', 'owner_name', 'service_title']
+        fields = ['id','description', 'image', 'start_date', 'end_date', 'status', 'package', 'service', 'owner_name','owner_phone', 'service_title', 'payment_image']
 
 class AdminAdUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
         fields = ['status']
+
+class PaymentAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentAccount
+        fields = [ "id", "bank_name", "account_name", "account_number", "created_at"]
 
 #================= favorite ==============================
 class FavoriteServiceSerializer(serializers.ModelSerializer):

@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import { useState, useEffect } from "react";
 
 function FitBounds({ bounds }) {
@@ -7,14 +7,24 @@ function FitBounds({ bounds }) {
     if (bounds) {
       map.fitBounds(bounds);
     }
-  }, [bounds]);
+  }, [bounds, map]);
   return null;
 }
 
-export default function MyMap({ value, onChange, bounds }) {
-  const [pos, setPos] = useState(
-    value || { lat: 15.3694, lon: 44.1910 }
-  );
+// ✅ هذا المكوّن يحرك الخريطة عند تغيّر pos
+function MapUpdater({ pos }) {
+  const map = useMap();
+  useEffect(() => {
+    if (pos) {
+      map.flyTo([pos.lat, pos.lon], map.getZoom()); 
+      // أو map.setView([pos.lat, pos.lon], map.getZoom());
+    }
+  }, [pos, map]);
+  return null;
+}
+
+export default function MyMap({ value, onChange, bounds, zoom }) {
+  const [pos, setPos] = useState(value || { lat: 15.3694, lon: 44.1910 });
 
   useEffect(() => {
     if (value) setPos(value);
@@ -41,7 +51,7 @@ export default function MyMap({ value, onChange, bounds }) {
   return (
     <MapContainer
       center={[pos.lat, pos.lon]}
-      zoom={13}
+      zoom={zoom}
       style={{ height: 300, width: "100%" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -52,6 +62,7 @@ export default function MyMap({ value, onChange, bounds }) {
         eventHandlers={{ dragend: handleDragEnd }}
       />
       <MapClick />
+      <MapUpdater pos={pos} zoom={zoom} /> {/* ✅ يحرك الخريطة مع الماركر */}
     </MapContainer>
   );
 }

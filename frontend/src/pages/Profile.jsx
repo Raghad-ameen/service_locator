@@ -19,7 +19,7 @@ function Profile() {
   const [previewImage, setPreviewImage] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const usernameRef = useRef(null);
-  // const emailRef = useRef(null);
+  const emailRef = useRef(null);
   const phoneRef = useRef(null);
   const navigate = useNavigate();
   const { token, setUser, logout, updateUser } = useAuth();
@@ -29,9 +29,9 @@ function Profile() {
     if (activeField === 'username' && usernameRef.current) {
       usernameRef.current.focus();
     }
-    // if (activeField === 'email' && emailRef.current) {
-    //   emailRef.current.focus();
-    // }
+    if (activeField === 'email' && emailRef.current) {
+      emailRef.current.focus();
+    }
     if (activeField === 'phone' && phoneRef.current) {
       phoneRef.current.focus();
     }
@@ -40,7 +40,7 @@ function Profile() {
 
   const [info, setInfo] = useState({
     username: '',
-    // email: '',
+    email: '',
     phone: '',
     profile_image: '',
     password: ''
@@ -72,7 +72,7 @@ function Profile() {
 
     const infoChanged =
       updatedInfo.username !== originalInfo.username ||
-      // updatedInfo.email !== originalInfo.email ||
+      updatedInfo.email !== originalInfo.email ||
       updatedInfo.phone !== originalInfo.phone ||
       !sameImage;
 
@@ -93,7 +93,7 @@ function Profile() {
       .then((res) => {
         const userData = {
           username: res.data.username || '',
-          // email: res.data.email || '',
+          email: res.data.email || '',
           phone: res.data.phone || '',
           profile_image: res.data.profile_image || '',
           password: ''
@@ -152,12 +152,12 @@ function Profile() {
       errors.push("الاسم مطلوب");
     }
 
-    // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    // if (!info.email.trim()) {
-    //   errors.push("البريد الإلكتروني مطلوب");
-    // } else if (!emailRegex.test(info.email)) {
-    //   errors.push("صيغة البريد الإلكتروني غير صحيحة");
-    // }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!info.email.trim()) {
+      errors.push("البريد الإلكتروني مطلوب");
+    } else if (!emailRegex.test(info.email)) {
+      errors.push("صيغة البريد الإلكتروني غير صحيحة");
+    }
 
     const phoneRegex = /^7\d{8}$/;
     if (!info.phone.trim()) {
@@ -178,7 +178,7 @@ function Profile() {
     }
     const data = new FormData();
     data.append('username', info.username);
-    // data.append('email', info.email);
+    data.append('email', info.email);
     data.append('phone', info.phone);
 
     if (info.profile_image && typeof info.profile_image !== 'string') {
@@ -202,7 +202,7 @@ function Profile() {
       .then((res) => {
         const updatedInfo = {
           username: res.data.username || info.username,
-          // email: res.data.email || info.email,
+          email: res.data.email || info.email,
           phone: res.data.phone || info.phone,
           profile_image: res.data.profile_image || info.profile_image,
           password: ''
@@ -227,7 +227,7 @@ function Profile() {
 
           if (msg) {
             // ✅ عرض التوست فقط للأخطاء الخاصة بـ الاسم، الإيميل، ورقم الهاتف
-            if (['username','phone'].includes(key)) {
+            if (['username', 'email', 'phone'].includes(key)) {
               toast.error(msg);
             }
 
@@ -327,11 +327,11 @@ function Profile() {
       label: "الاسم",
       ref: usernameRef
     },
-    // {
-    //   name: "email",
-    //   label: "عنوان البريد الالكتروني",
-    //   ref: emailRef
-    // },
+    {
+      name: "email",
+      label: "عنوان البريد الالكتروني",
+      ref: emailRef
+    },
     {
       name: "phone",
       label: "رقم الهاتف",

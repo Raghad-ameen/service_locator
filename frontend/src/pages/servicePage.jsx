@@ -14,14 +14,14 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 // دالة جلب العنوان من Nominatim
 const getAddressFromCoords = async (lat, lon) => {
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ar`
     );
-    const data = await res.json();
-    return data.address;
-  } catch (err) {
-    console.error("خطأ في جلب العنوان:", err);
-    return null;
+    const data = await response.json();
+    return data.display_name || "عنوان غير معروف";
+  } catch (error) {
+    console.error("خطأ في جلب العنوان:", error);
+    return "عنوان غير معروف";
   }
 };
 const ServicePage = () => {
@@ -68,11 +68,10 @@ const ServicePage = () => {
       .then(async (res) => {
         setService(res.data);
 
-        // جلب العنوان من Nominatim
-        if (res.data.latitude && res.data.longitude) {
-          const addr = await getAddressFromCoords(res.data.latitude, res.data.longitude);
-          setAddress(addr);
-        }
+if (res.data.latitude && res.data.longitude) {
+  const addr = await getAddressFromCoords(res.data.latitude, res.data.longitude);
+  setAddress(addr); // هنا نخزن النص فقط
+}
 
         setLoading(false);
       })
@@ -299,14 +298,13 @@ const ServicePage = () => {
         {/* الموقع */}
         <div className="mt-10">
           <h2 className="text-lg font-medium mb-3">الموقع</h2>
-          <p>
-            {address
-              ? `${address.road || ""}، ${address.suburb || address.city || ""}`
-              : (service.latitude && service.longitude
-                ? `${service.latitude}, ${service.longitude}`
-                : "لم يتم تحديد الموقع")}
-          </p>
-
+    <p>
+  {address
+    ? address.split(",").slice(0, 3).join("،")
+    : (service.latitude && service.longitude
+        ? `${service.latitude}, ${service.longitude}`
+        : "لم يتم تحديد الموقع")}
+</p>
           {service.latitude && service.longitude && (
             <div className="w-full h-100 rounded-3xl shadow-sm border border-gray-200 overflow-hidden mt-4">
               <MapContainer
